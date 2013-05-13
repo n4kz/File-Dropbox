@@ -1,0 +1,66 @@
+use strict;
+use warnings;
+use Test::More tests => 4;
+
+BEGIN {
+	use_ok 'File::Dropbox';
+}
+
+my $dropbox = File::Dropbox->new();
+
+subtest Constructor => sub {
+	is ref $dropbox, 'GLOB',
+		'Constructor returned GLOB reference';
+
+	isa_ok *$dropbox{'IO'}, 'IO::File',
+		'GLOB contains IO handle';
+
+	isa_ok *$dropbox{'HASH'}, 'File::Dropbox',
+		'GLOB contais tied object';
+};
+
+subtest Self => sub {
+	my $self = *$dropbox{'HASH'};
+
+	isa_ok $self, 'Tie::Handle',
+		'Tied object inherits Tie::Handle';
+
+	isa_ok $self, 'Exporter',
+		'Tied object inherits Exporter';
+
+	is $self->{'version'}, 1,
+		'API version is set';
+
+	is $self->{'chunk'}, 4 * 1024 * 1024,
+		'Chunk size is set';
+
+	is $self->{'root'}, 'sandbox',
+		'Root is set';
+
+	is $self->{'mode'}, '',
+		'Mode is not set';
+
+	is $self->{'closed'}, 1,
+		'Handle is not opened';
+
+	is $self->{'position'}, 0,
+		'Handle position is 0';
+
+	is $self->{'length'}, 0,
+		'Buffer length is 0';
+
+	is $self->{'buffer'}, '',
+		'Buffer is empty';
+
+	can_ok $self, qw{ READ WRITE READLINE SEEK TELL OPEN CLOSE EOF BINMODE contents putfile metadata };
+
+	is_deeply \@File::Dropbox::EXPORT_OK, [qw{ contents putfile metadata }],
+		'@EXPORT_OK is set';
+};
+
+subtest Curl => sub {
+	my $curl = *$dropbox{'HASH'}->{'curl'};
+
+	isa_ok $curl, 'WWW::Curl::Easy',
+		'Curl object created';
+};
