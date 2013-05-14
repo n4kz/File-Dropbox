@@ -41,14 +41,68 @@ SYNOPSIS
    
         close $dropbox;
 
+DESCRIPTION
+    `File::Dropbox' provides high-level Dropbox API abstraction based on
+    `Tie::Handle'. Code required to get `access_token' and `access_secret'
+    for signed OAuth requests is not included in this module.
+
+    All API requests are done using WWW::Curl module and libcurl will reuse
+    same connection as long as possible. This greatly improves overall
+    module performance. To go even further you can share WWW::Curl::Easy
+    object between different `File::Dropbox' objects, see METHODS for
+    details.
+
+    At this moment Dropbox API is not fully supported, `File::Dropbox'
+    covers file read/write and directory listing methods. If you need full
+    API support take look at WebService::Dropbox. `File::Dropbox' main
+    purpose is not 100% API coverage, but simple and high-performance file
+    operations.
+
+METHODS
+  new
+        my $dropbox = File::Dropbox->new(
+            access_secret => 'secret',
+            access_token  => 'token',
+            app_secret    => 'app secret',
+            app_key       => 'app key',
+            chunk         => 8 * 1024 * 1024,
+            curl          => $curl,
+            root          => 'dropbox',
+        );
+
+    Constructor, takes key-value pairs list
+
+    access_secret
+        OAuth access secret
+
+    access_token
+        OAuth access token
+
+    app_secret
+        OAuth app secret
+
+    app_key
+        OAuth app key
+
+    chunk
+        Upload chunk size in bytes. Also buffer size for `readline'.
+        Optional. Defaults to 4MB.
+
+    curl
+        `WWW::Curl::Easy' object to use. Optional.
+
+    root
+        Access type, `sandbox' for app-folder only access and `dropbox' for
+        full access.
+
 SEE ALSO
     WWW::Curl, WebService::Dropbox
 
 AUTHOR
     Alexander Nazarov <nfokz@cpan.org>
 
-COPYRIGHT
-    Copyright 2013 Alexander Nazarov, all rights reserved.
+COPYRIGHT AND LICENSE
+    Copyright 2013 Alexander Nazarov
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
