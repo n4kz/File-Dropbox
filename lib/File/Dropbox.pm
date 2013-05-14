@@ -15,6 +15,8 @@ my $hosts = {
 	api     => 'api.dropbox.com',
 };
 
+my $version = 1;
+
 my $header = <<'';
 Authorization: OAuth oauth_version="1.0", oauth_signature_method="PLAINTEXT", oauth_consumer_key="%s", oauth_token="%s", oauth_signature="%s&%s"
 
@@ -32,9 +34,11 @@ sub new {
 sub TIEHANDLE {
 	my $self = bless $_[1], ref $_[0] || $_[0];
 
-	$self->{'version'} //= 1;
 	$self->{'chunk'}   //= 4 << 20;
 	$self->{'root'}    //= 'sandbox';
+
+	die 'Unexpected root value'
+		unless $self->{'root'} =~ m{^(?:drop|sand)box$};
 
 	unless ($self->{'curl'}) {
 		my $curl = $self->{'curl'} = WWW::Curl::Easy->new();
@@ -65,7 +69,7 @@ sub READ {
 	$curl = $self->{'curl'};
 
 	$url  = 'https://';
-	$url .= join '/', $hosts->{'content'}, $self->{'version'};
+	$url .= join '/', $hosts->{'content'}, $version;
 	$url .= join '/', '/files', $self->{'root'}, $self->{'path'};
 
 	$curl->setopt(CURLOPT_URL, $url);
@@ -226,7 +230,7 @@ sub WRITE {
 	$self->{'buffer'}  .= $buffer;
 	$self->{'length'}  += $length;
 
-	$self->__flush__()
+	$self->__flush__() or return 0
 		while $self->{'length'} >= $self->{'chunk'};
 
 	return 1;
@@ -244,7 +248,7 @@ sub CLOSE {
 	if ($mode eq '>') {
 		if ($self->{'length'} or not $self->{'upload_id'}) {
 			do {
-				$self->__flush__()
+				$self->__flush__() or return 0
 			} while length $self->{'buffer'};
 		}
 	}
@@ -322,7 +326,7 @@ sub __flush__ {
 	my $url;
 
 	$url  = 'https://';
-	$url .= join '/', $hosts->{'content'}, $self->{'version'};
+	$url .= join '/', $hosts->{'content'}, $version;
 
 	$url .= join '/', '/commit_chunked_upload', $self->{'root'}, $self->{'path'}
 		if $self->{'closed'};
@@ -411,7 +415,7 @@ sub __meta__ {
 	$curl = $self->{'curl'};
 
 	$url  = 'https://';
-	$url .= join '/', $hosts->{'api'}, $self->{'version'};
+	$url .= join '/', $hosts->{'api'}, $version;
 	$url .= join '/', '/metadata', $self->{'root'}, $self->{'path'};
 
 	$url .= '?hash='. $self->{'hash'}
@@ -487,7 +491,7 @@ sub putfile ($$$) {
 	my ($url, $length);
 
 	$url  = 'https://';
-	$url .= join '/', $hosts->{'content'}, $self->{'version'};
+	$url .= join '/', $hosts->{'content'}, $version;
 	$url .= join '/', '/files_put', $self->{'root'}, $path;
 
 	$curl->setopt(CURLOPT_URL, $url);
@@ -570,7 +574,7 @@ File::Dropbox - Convenient and fast Dropbox API abstraction
         access_secret => 'access secret',
     );
     
-    my $dropbox = File::Dropbox->new(%$app);
+    my $dropbox = File::Dropbox->new(%app);
    
     # Open file for writing
     open $dropbox, '>', 'example' or die $!;
@@ -598,6 +602,67 @@ File::Dropbox - Convenient and fast Dropbox API abstraction
    
     close $dropbox;
 
+=head1 DESCRIPTION
+
+C<File::Dropbox> provides high-level Dropbox API abstraction based on C<Tie::Handle>. Code required to get C<access_token> and
+C<access_secret> for signed OAuth requests is not included in this module.
+
+All API requests are done using L<WWW::Curl> module and libcurl will reuse same connection as long as possible.
+This greatly improves overall module performance. To go even further you can share L<WWW::Curl::Easy> object between different C<File::Dropbox>
+objects, see L<METHODS/new> for details.
+
+At this moment Dropbox API is not fully supported, C<File::Dropbox> covers file read/write and directory listing methods. If you need full
+API support take look at L<WebService::Dropbox>. C<File::Dropbox> main purpose is not 100% API coverage,
+but simple and high-performance file operations.
+
+=head1 METHODS
+
+=head2 new
+
+    my $dropbox = File::Dropbox->new(
+        access_secret => 'secret',
+        access_token  => 'token',
+        app_secret    => 'app secret',
+        app_key       => 'app key',
+        chunk         => 8 * 1024 * 1024,
+        curl          => $curl,
+        root          => 'dropbox',
+    );
+
+Constructor, takes key-value pairs list
+
+=over
+
+=item access_secret
+
+OAuth access secret
+
+=item access_token
+
+OAuth access token
+
+=item app_secret
+
+OAuth app secret
+
+=item app_key
+
+OAuth app key
+
+=item chunk
+
+Upload chunk size in bytes. Also buffer size for C<readline>. Optional. Defaults to 4MB.
+
+=item curl
+
+C<WWW::Curl::Easy> object to use. Optional.
+
+=item root
+
+Access type, C<sandbox> for app-folder only access and C<dropbox> for full access.
+
+=back
+
 =head1 SEE ALSO
 
 L<WWW::Curl>, L<WebService::Dropbox>
@@ -606,9 +671,9 @@ L<WWW::Curl>, L<WebService::Dropbox>
 
 Alexander Nazarov <nfokz@cpan.org>
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright 2013 Alexander Nazarov, all rights reserved.
+Copyright 2013 Alexander Nazarov
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

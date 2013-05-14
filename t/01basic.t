@@ -28,9 +28,6 @@ subtest Self => sub {
 	isa_ok $self, 'Exporter',
 		'Tied object inherits Exporter';
 
-	is $self->{'version'}, 1,
-		'API version is set';
-
 	is $self->{'chunk'}, 4 * 1024 * 1024,
 		'Chunk size is set';
 
