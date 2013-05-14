@@ -1,0 +1,9 @@
+Build.PL
+lib/File/Dropbox.pm
+LICENSE
+MANIFEST
+META.json
+META.yml
+README
+t/01basic.t
+t/02open.t

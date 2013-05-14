@@ -1,0 +1,55 @@
+NAME
+    File::Dropbox - Convenient and fast Dropbox API abstraction
+
+SYNOPSIS
+        use File::Dropbox;
+        use Fcntl;
+   
+        # Application credentials
+        my %app = (
+            app_key       => 'app key', 
+            app_secret    => 'app secret',
+            access_token  => 'access token',
+            access_secret => 'access secret',
+        );
+    
+        my $dropbox = File::Dropbox->new(%app);
+   
+        # Open file for writing
+        open $dropbox, '>', 'example' or die $!;
+    
+        while (<>) {
+            # Upload data using 4MB chunks
+            print $dropbox $_;
+        }
+   
+        # Commit upload (optional, close will be called on reopen)
+        close $dropbox or die $!;
+    
+        # Open for reading
+        open $dropbox, '<', 'example' or die $!;
+   
+        # Download and print to STDOUT
+        # Buffered, default buffer size is 4MB
+        print while <$dropbox>;
+
+        # Reset file position
+        seek $dropbox, 0, Fcntl::SEEK_SET;
+
+        # Get first character (unbuffered)
+        say getc $dropbox;
+   
+        close $dropbox;
+
+SEE ALSO
+    WWW::Curl, WebService::Dropbox
+
+AUTHOR
+    Alexander Nazarov <nfokz@cpan.org>
+
+COPYRIGHT
+    Copyright 2013 Alexander Nazarov, all rights reserved.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
