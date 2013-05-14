@@ -43,20 +43,26 @@ SYNOPSIS
 
 DESCRIPTION
     `File::Dropbox' provides high-level Dropbox API abstraction based on
-    `Tie::Handle'. Code required to get `access_token' and `access_secret'
-    for signed OAuth requests is not included in this module.
-
-    All API requests are done using WWW::Curl module and libcurl will reuse
-    same connection as long as possible. This greatly improves overall
-    module performance. To go even further you can share WWW::Curl::Easy
-    object between different `File::Dropbox' objects, see METHODS for
-    details.
+    Tie::Handle. Code required to get `access_token' and `access_secret' for
+    signed OAuth requests is not included in this module.
 
     At this moment Dropbox API is not fully supported, `File::Dropbox'
     covers file read/write and directory listing methods. If you need full
     API support take look at WebService::Dropbox. `File::Dropbox' main
     purpose is not 100% API coverage, but simple and high-performance file
     operations.
+
+    Due to API limitations and design you can not do read and write
+    operations on one file at the same time. Therefore handle can be in
+    read-only or write-only state, depending on last call to open. Supported
+    functions for read-only state are: open, close, seek, tell, readline,
+    read, sysread, getc, eof. For write-only state: open, close, syswrite,
+    print, printf, say.
+
+    All API requests are done using WWW::Curl module and libcurl will reuse
+    same connection as long as possible. This greatly improves overall
+    module performance. To go even further you can share WWW::Curl::Easy
+    object between different `File::Dropbox' objects, see new for details.
 
 METHODS
   new
@@ -91,12 +97,72 @@ METHODS
     curl
         `WWW::Curl::Easy' object to use. Optional.
 
+            # Get curl object
+            my $curl = *$dropbox->{'curl'};
+
+            # And share it
+            my $dropbox2 = File::Dropbox->new(%app, curl => $curl);
+
     root
         Access type, `sandbox' for app-folder only access and `dropbox' for
         full access.
 
+    debug
+        Enable libcurl debug output.
+
+FUNCTIONS
+    All functions are not exported by default but can be exported on demand.
+
+        use File::Dropbox qw{ contents metadata putfile };
+
+    First argument for all functions should be GLOB reference, returned by
+    new.
+
+  contents
+    Arguments: $dropbox [, $path]
+
+    Function returns list of hashrefs representing directory content. Hash
+    fields described in Dropbox API docs. `$path' defaults to `/'. If there
+    is unfinished chunked upload on handle, it will be commited.
+
+        foreach my $file (contents($dropbox, '/data')) {
+            next if $file->{'is_dir'};
+            say $file->{'path'}, ' - ', $file->{'bytes'};
+        }
+
+  metadata
+    Arguments: $dropbox
+
+    Function returns stored metadata for read-only handle, closed write
+    handle or after call to contents or putfile.
+
+        open $dropbox, '<', '/data/2013.dat' or die $!;
+
+        my $meta = metadata($dropbox);
+
+        if ($meta->{'bytes'} > 1024) {
+            # Do something
+        }
+
+  putfile
+    Arguments: $dropbox, $path, $data
+
+    Function is useful for uploading small files (up to 150MB possible) in
+    one request (at least two API requests required for chunked upload, used
+    in open-write-close cycle). If there is unfinished chunked upload on
+    handle, it will be commited.
+
+        local $/;
+        open my $data, '<', '2012.dat' or die $!;
+
+        putfile($dropbox, '/data/2012.dat', <$data>) or die $!;
+
+        say 'Uploaded ', metadata($dropbox)->{'bytes'}, ' bytes';
+
+        close $data;
+
 SEE ALSO
-    WWW::Curl, WebService::Dropbox
+    WWW::Curl, WebService::Dropbox, Dropbox API
 
 AUTHOR
     Alexander Nazarov <nfokz@cpan.org>

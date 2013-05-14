@@ -484,7 +484,7 @@ sub putfile ($$$) {
 	die 'GLOB reference expected'
 		unless ref $handle eq 'GLOB';
 
-	close $handle;
+	close $handle or return 0;
 
 	my $self = *$handle{'HASH'};
 	my $curl = $self->{'curl'};
@@ -604,16 +604,22 @@ File::Dropbox - Convenient and fast Dropbox API abstraction
 
 =head1 DESCRIPTION
 
-C<File::Dropbox> provides high-level Dropbox API abstraction based on C<Tie::Handle>. Code required to get C<access_token> and
+C<File::Dropbox> provides high-level Dropbox API abstraction based on L<Tie::Handle>. Code required to get C<access_token> and
 C<access_secret> for signed OAuth requests is not included in this module.
-
-All API requests are done using L<WWW::Curl> module and libcurl will reuse same connection as long as possible.
-This greatly improves overall module performance. To go even further you can share L<WWW::Curl::Easy> object between different C<File::Dropbox>
-objects, see L<METHODS/new> for details.
 
 At this moment Dropbox API is not fully supported, C<File::Dropbox> covers file read/write and directory listing methods. If you need full
 API support take look at L<WebService::Dropbox>. C<File::Dropbox> main purpose is not 100% API coverage,
 but simple and high-performance file operations.
+
+Due to API limitations and design you can not do read and write operations on one file at the same time. Therefore handle can be in read-only
+or write-only state, depending on last call to L<open|perlfunc/open>. Supported functions for read-only state are: L<open|perlfunc/open>,
+L<close|perlfunc/close>, L<seek|perlfunc/seek>, L<tell|perlfunc/tell>, L<readline|perlfunc/readline>, L<read|perlfunc/read>,
+L<sysread|perlfunc/sysread>, L<getc|perlfunc/getc>, L<eof|perlfunc/eof>. For write-only state: L<open|perlfunc/open>, L<close|perlfunc/close>,
+L<syswrite|perlfunc/syswrite>, L<print|perlfunc/print>, L<printf|perlfunc/printf>, L<say|perlfunc/say>.
+
+All API requests are done using L<WWW::Curl> module and libcurl will reuse same connection as long as possible.
+This greatly improves overall module performance. To go even further you can share L<WWW::Curl::Easy> object between different C<File::Dropbox>
+objects, see L</new> for details.
 
 =head1 METHODS
 
@@ -657,15 +663,78 @@ Upload chunk size in bytes. Also buffer size for C<readline>. Optional. Defaults
 
 C<WWW::Curl::Easy> object to use. Optional.
 
+    # Get curl object
+    my $curl = *$dropbox->{'curl'};
+
+    # And share it
+    my $dropbox2 = File::Dropbox->new(%app, curl => $curl);
+
 =item root
 
 Access type, C<sandbox> for app-folder only access and C<dropbox> for full access.
 
+=item debug
+
+Enable libcurl debug output.
+
 =back
+
+=head1 FUNCTIONS
+
+All functions are not exported by default but can be exported on demand.
+
+    use File::Dropbox qw{ contents metadata putfile };
+
+First argument for all functions should be GLOB reference, returned by L</new>.
+
+=head2 contents
+
+Arguments: $dropbox [, $path]
+
+Function returns list of hashrefs representing directory content. Hash fields described in L<Dropbox API
+docs|https://www.dropbox.com/developers/core/docs#metadata>. C<$path> defaults to C</>. If there is
+unfinished chunked upload on handle, it will be commited.
+
+    foreach my $file (contents($dropbox, '/data')) {
+        next if $file->{'is_dir'};
+        say $file->{'path'}, ' - ', $file->{'bytes'};
+    }
+
+=head2 metadata
+
+Arguments: $dropbox
+
+Function returns stored metadata for read-only handle, closed write handle or after
+call to L</contents> or L</putfile>.
+
+    open $dropbox, '<', '/data/2013.dat' or die $!;
+
+    my $meta = metadata($dropbox);
+
+    if ($meta->{'bytes'} > 1024) {
+        # Do something
+    }
+
+=head2 putfile
+
+Arguments: $dropbox, $path, $data
+
+Function is useful for uploading small files (up to 150MB possible) in one request (at least
+two API requests required for chunked upload, used in open-write-close cycle). If there is
+unfinished chunked upload on handle, it will be commited.
+
+    local $/;
+    open my $data, '<', '2012.dat' or die $!;
+
+    putfile($dropbox, '/data/2012.dat', <$data>) or die $!;
+
+    say 'Uploaded ', metadata($dropbox)->{'bytes'}, ' bytes';
+
+    close $data;
 
 =head1 SEE ALSO
 
-L<WWW::Curl>, L<WebService::Dropbox>
+L<WWW::Curl>, L<WebService::Dropbox>, L<Dropbox API|https://www.dropbox.com/developers/core/docs>
 
 =head1 AUTHOR
 
