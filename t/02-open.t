@@ -1,13 +1,14 @@
 use strict;
 use warnings;
-use Test::More tests => 11;
+use lib 't/lib';
+use Test::More tests => 15;
 use File::Dropbox;
-use Fcntl qw{ SEEK_CUR SEEK_SET SEEK_END };
-use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES };
+use Test::Common ':all';
 
 my $app     = do 'app.conf';
 my $dropbox = File::Dropbox->new(%$app);
-my $file    = time. '.test';
+my $path    = 'test/';
+my $file    = $path. time;
 
 sub is_closed {
 	subtest Closed => sub {
@@ -44,40 +45,39 @@ sub is_closed {
 			'Eof failed on unopened handle';
 
 		my $self = *$dropbox{'HASH'};
-		ok !$self->{'mode'},  'Mode is not set';
-		ok $self->{'closed'}, 'Closed flag is set';
+		ok !$self->{'mode'},     'Mode is not set';
+		ok !$self->{'buffer'},   'Buffer is empty';
+		ok !$self->{'length'},   'Length is not set';
+		ok !$self->{'position'}, 'Position is not set';
+		ok $self->{'closed'},    'Closed flag is set';
 	};
 } # is_closed
 
 SKIP: {
-	skip 'No API key found', 10
-		unless $app->{'app_key'} and $app->{'app_secret'};
 
-	is_closed();
+skip 'No API key found', 14
+	unless $app->{'app_key'} and $app->{'app_secret'};
 
-	# Try to open not existing file for reading
-	my $result = open $dropbox, '<', $file;
+is_closed();
 
-	is $result, 0,      'Failed to open not existing file';
-	is int $!,  ENOENT, 'Error is set';
+# Try to open not existing file for reading
+errn { open $dropbox, '<', $file } ENOENT, 'Failed to open not existing file';
 
-	is_closed();
+is_closed();
 
-	# Try to open it for writing
-	$result = open $dropbox, '>', $file;
+# Try to open it for writing
+okay { open  $dropbox, '>', $file } 'File opened for writing';
 
-	is $result, 1, 'File opened for write';
-	ok !$!,        'Error is not set';
+# Try to open directory for reading
+errn { open  $dropbox, '<', $path } EISDIR, 'Failed to read directory';
 
-	# Open for reading again
-	$result = open $dropbox, '<', $file;
+# Open file for reading again
+okay { open  $dropbox, '<', $file } 'Empty file created';
 
-	is $result, 1, 'Empty file created';
-	ok !$!,        'Error is not set';
+# Check end and close
+okay { eof   $dropbox } 'File is empty';
+okay { close $dropbox } 'File is closed';
 
-	# Check end and close
-	ok eof   $dropbox, 'File is empty';
-	ok close $dropbox, 'File is closed';
 } # SKIP
 
 is_closed();

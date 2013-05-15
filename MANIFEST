@@ -5,5 +5,7 @@ MANIFEST
 META.json
 META.yml
 README
-t/01basic.t
-t/02open.t
+t/01-basic.t
+t/02-open.t
+t/03-write.t
+t/lib/Test/Common.pm

@@ -1,9 +1,11 @@
 use strict;
 use warnings;
-use Test::More tests => 4;
+use lib 't/lib';
+use Test::More tests => 5;
 
 BEGIN {
 	use_ok 'File::Dropbox';
+	use_ok 'Test::Common';
 }
 
 my $dropbox = File::Dropbox->new();

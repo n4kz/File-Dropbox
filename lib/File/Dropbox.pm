@@ -248,7 +248,8 @@ sub CLOSE {
 	if ($mode eq '>') {
 		if ($self->{'length'} or not $self->{'upload_id'}) {
 			do {
-				$self->__flush__() or return 0
+				@{ $self }{qw{ closed mode }} = (1, '') and return 0
+					unless $self->__flush__();
 			} while length $self->{'buffer'};
 		}
 	}
@@ -285,8 +286,9 @@ sub OPEN {
 	$self->CLOSE()
 		unless $self->{'closed'};
 
-	$self->{'length'} = 0;
-	$self->{'buffer'} = '';
+	$self->{'length'}   = 0;
+	$self->{'position'} = 0;
+	$self->{'buffer'}   = '';
 
 	delete $self->{'offset'};
 	delete $self->{'revision'};
@@ -565,31 +567,31 @@ File::Dropbox - Convenient and fast Dropbox API abstraction
 
     use File::Dropbox;
     use Fcntl;
-   
+
     # Application credentials
     my %app = (
-        app_key       => 'app key', 
+        app_key       => 'app key',
         app_secret    => 'app secret',
         access_token  => 'access token',
         access_secret => 'access secret',
     );
-    
+
     my $dropbox = File::Dropbox->new(%app);
-   
+
     # Open file for writing
     open $dropbox, '>', 'example' or die $!;
-    
+
     while (<>) {
         # Upload data using 4MB chunks
         print $dropbox $_;
     }
-   
+
     # Commit upload (optional, close will be called on reopen)
     close $dropbox or die $!;
-    
+
     # Open for reading
     open $dropbox, '<', 'example' or die $!;
-   
+
     # Download and print to STDOUT
     # Buffered, default buffer size is 4MB
     print while <$dropbox>;
@@ -599,7 +601,7 @@ File::Dropbox - Convenient and fast Dropbox API abstraction
 
     # Get first character (unbuffered)
     say getc $dropbox;
-   
+
     close $dropbox;
 
 =head1 DESCRIPTION
