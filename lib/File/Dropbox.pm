@@ -63,7 +63,7 @@ sub READ {
 	die 'Read is not supported on this handle'
 		if $self->{'mode'} ne '<';
 
-	return 0
+	substr($_[1] //= '', $offset // 0) = '', return 0
 		if $self->EOF();
 
 	$curl = $self->{'curl'};

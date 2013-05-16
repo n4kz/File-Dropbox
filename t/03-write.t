@@ -104,8 +104,8 @@ okay { open $dropbox, '<', $file } 'File opened for reading';
 
 cntr 19;
 
-is readline $dropbox, undef,       'Content is okay';
-okay { close $dropbox }            'All done';
+is readline $dropbox, undef, 'Content is okay';
+okay { close $dropbox }      'All done';
 
 cntr 19;
 
