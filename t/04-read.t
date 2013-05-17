@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use feature 'say';
 use lib 't/lib';
-use Test::More tests => 62;
+use Test::More tests => 78;
 use Test::Common qw{ EINVAL :func :seek };
 use File::Dropbox;
 
@@ -14,7 +14,7 @@ my $data;
 
 SKIP: {
 
-skip 'No API key found', 62
+skip 'No API key found', 78
 	unless $app->{'app_key'} and $app->{'app_secret'};
 
 # Write plain file
@@ -83,4 +83,23 @@ okay { read $dropbox, $data, 1024 }      'Read 1k from file start';
 is $data, 'A' x 1024,   'Right content';
 is tell $dropbox, 1024, 'Right position is set';
 
+okay { seek  $dropbox, 1023, SEEK_SET } 'Seek to 1023';
+
+is getc $dropbox, 'A', 'Get A character';
+is getc $dropbox, 'B', 'Get B character';
+is getc $dropbox, 'B', 'Get B character';
+
+is tell $dropbox, 1026, 'Right position is set';
+
+okay { open  $dropbox, '<', $file } 'File reopened for reading';
+
+is tell $dropbox, 0, 'Right position is set';
+ok !eof $dropbox,    'Not at end of file';
+
+okay { seek $dropbox, 0, SEEK_CUR } 'Dummy seek';
+
+is tell $dropbox, 0, 'Right position is set';
+ok !eof $dropbox,    'Not at end of file';
+
+okay { close $dropbox } 'All done';
 } # SKIP
