@@ -6,7 +6,7 @@ use Test::Common qw{ EISDIR :func };
 use File::Dropbox 'metadata';
 
 my $app     = do 'app.conf';
-my $dropbox = File::Dropbox->new(%$app, chunk => 4096);
+my $dropbox = File::Dropbox->new(%$app);
 my $path    = 'test';
 my $file    = $path. '/'. time;
 
