@@ -4,31 +4,31 @@ NAME
 SYNOPSIS
         use File::Dropbox;
         use Fcntl;
-   
+
         # Application credentials
         my %app = (
-            app_key       => 'app key', 
+            app_key       => 'app key',
             app_secret    => 'app secret',
             access_token  => 'access token',
             access_secret => 'access secret',
         );
-    
+
         my $dropbox = File::Dropbox->new(%app);
-   
+
         # Open file for writing
         open $dropbox, '>', 'example' or die $!;
-    
+
         while (<>) {
             # Upload data using 4MB chunks
             print $dropbox $_;
         }
-   
+
         # Commit upload (optional, close will be called on reopen)
         close $dropbox or die $!;
-    
+
         # Open for reading
         open $dropbox, '<', 'example' or die $!;
-   
+
         # Download and print to STDOUT
         # Buffered, default buffer size is 4MB
         print while <$dropbox>;
@@ -38,7 +38,7 @@ SYNOPSIS
 
         # Get first character (unbuffered)
         say getc $dropbox;
-   
+
         close $dropbox;
 
 DESCRIPTION
