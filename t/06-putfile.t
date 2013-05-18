@@ -17,7 +17,7 @@ like $@, qr{GLOB reference expected},
 
 SKIP: {
 
-skip 'No API key found', 7
+skip 'No API key found', 8
 	unless $app->{'app_key'} and $app->{'app_secret'};
 
 # Normal upload

@@ -17,7 +17,7 @@ like $@, qr{GLOB reference expected},
 
 SKIP: {
 
-skip 'No API key found', 12
+skip 'No API key found', 13
 	unless $app->{'app_key'} and $app->{'app_secret'};
 
 # Create test file and directory
