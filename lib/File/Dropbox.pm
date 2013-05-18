@@ -294,7 +294,6 @@ sub OPEN {
 	delete $self->{'revision'};
 	delete $self->{'upload_id'};
 	delete $self->{'meta'};
-	delete $self->{'hash'};
 	delete $self->{'eof'};
 
 	$self->{'path'} = $file
@@ -420,7 +419,7 @@ sub __meta__ {
 	$url .= join '/', $hosts->{'api'}, $version;
 	$url .= join '/', '/metadata', $self->{'root'}, $self->{'path'};
 
-	$url .= '?hash='. $self->{'hash'}
+	$url .= '?hash='. delete $self->{'hash'}
 		if $self->{'hash'};
 
 	$curl->setopt(CURLOPT_URL, $url);
@@ -474,7 +473,10 @@ sub contents ($;$$) {
 	*$handle->{'hash'} = $hash
 		if $hash;
 
-	return if open $handle, '<', $path || '/' or $! != EISDIR;
+	if (open $handle, '<', $path || '/' or $! != EISDIR) {
+		delete *$handle->{'meta'};
+		return;
+	}
 
 	undef $!;
 	return @{ *$handle->{'meta'}{'contents'} };

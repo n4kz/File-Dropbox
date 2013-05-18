@@ -1,14 +1,20 @@
 use strict;
 use warnings;
 use lib 't/lib';
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 BEGIN {
 	use_ok 'File::Dropbox';
 	use_ok 'Test::Common';
 }
 
-my $dropbox = File::Dropbox->new();
+my $dropbox;
+
+eval { $dropbox = File::Dropbox->new(root => 'frfrbox') };
+
+like $@, qr{Unexpected root value}, 'Root parameter validation';
+
+$dropbox = File::Dropbox->new();
 
 subtest Constructor => sub {
 	is ref $dropbox, 'GLOB',
@@ -19,6 +25,8 @@ subtest Constructor => sub {
 
 	isa_ok *$dropbox{'HASH'}, 'File::Dropbox',
 		'GLOB contais tied object';
+
+	is binmode($dropbox), 1, 'Binmode works';
 };
 
 subtest Self => sub {
