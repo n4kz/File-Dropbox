@@ -5,7 +5,7 @@ use Test::More tests => 15;
 use File::Dropbox;
 use Test::Common ':all';
 
-my $app     = do 'app.conf';
+my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
 my $path    = 'test/';
 my $file    = $path. time;
@@ -55,8 +55,8 @@ sub is_closed {
 
 SKIP: {
 
-skip 'No API key found', 14
-	unless $app->{'app_key'} and $app->{'app_secret'};
+skip 'DROPBOX_AUTH is not set or has wrong value', 14
+	unless keys %$app;
 
 is_closed();
 

@@ -5,7 +5,7 @@ use Test::More tests => 9;
 use Test::Common qw{ :func EINVAL };
 use File::Dropbox qw{ putfile metadata };
 
-my $app     = do 'app.conf';
+my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
 my $path    = 'test';
 my $file    = $path. '/'. time;
@@ -17,8 +17,8 @@ like $@, qr{GLOB reference expected},
 
 SKIP: {
 
-skip 'No API key found', 8
-	unless $app->{'app_key'} and $app->{'app_secret'};
+skip 'DROPBOX_AUTH is not set or has wrong value', 8
+	unless keys %$app;
 
 # Normal upload
 okay { putfile $dropbox, $file, 'A' x 1024 } 'Put 1k file';

@@ -5,7 +5,7 @@ use Test::More tests => 14;
 use Test::Common qw{ :func ENOENT };
 use File::Dropbox qw{ putfile metadata contents };
 
-my $app     = do 'app.conf';
+my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
 my $path    = 'test/contents'. time;
 my $file    = $path. '/'. time;
@@ -17,8 +17,8 @@ like $@, qr{GLOB reference expected},
 
 SKIP: {
 
-skip 'No API key found', 13
-	unless $app->{'app_key'} and $app->{'app_secret'};
+skip 'DROPBOX_AUTH is not set or has wrong value', 13
+	unless keys %$app;
 
 # Create test file and directory
 okay { putfile $dropbox, $file, 'A' x 1024 } 'Put 1k file';

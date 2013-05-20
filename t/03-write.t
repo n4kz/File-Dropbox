@@ -6,7 +6,7 @@ use Test::More tests => 64;
 use Test::Common qw{ EINVAL :func };
 use File::Dropbox;
 
-my $app     = do 'app.conf';
+my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app, chunk => 16 * 1024);
 my $path    = 'test/';
 my $file    = $path. time;
@@ -29,8 +29,8 @@ sub cntr ($) { is $counter, $_[0], sprintf 'Completed %i requests', $_[0] }
 
 SKIP: {
 
-skip 'No API key found', 64
-	unless $app->{'app_key'} and $app->{'app_secret'};
+skip 'DROPBOX_AUTH is not set or has wrong value', 64
+	unless keys %$app;
 
 # Try to open directory for writing
 okay { open  $dropbox, '>', $path }                  'Path opened';

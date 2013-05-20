@@ -9,7 +9,7 @@ use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES };
 our %EXPORT_TAGS = (
 	seek  => [qw{ SEEK_CUR SEEK_SET SEEK_END }],
 	fcntl => [qw{ ENOENT EISDIR EINVAL EPERM EACCES }],
-	func  => [qw{ okay errn }],
+	func  => [qw{ okay errn conf }],
 );
 
 our @EXPORT_OK = map { @$_ } values %EXPORT_TAGS;
@@ -30,5 +30,16 @@ sub errn (&$$) {
 	ok !$result,      $_[2];
 	is int $!, $_[1], 'Error is set';
 } # errn
+
+sub conf {
+	my %app;
+
+	@app{qw{ app_key app_secret access_token access_secret }} = split ':', $ENV{'DROPBOX_AUTH'} || '';
+
+	%app = ()
+		if grep { not defined or not length } values %app;
+
+	return \%app;
+} # conf
 
 1;

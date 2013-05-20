@@ -6,7 +6,7 @@ use Test::More tests => 78;
 use Test::Common qw{ EINVAL :func :seek };
 use File::Dropbox;
 
-my $app     = do 'app.conf';
+my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app, chunk => 4096);
 my $path    = 'test/';
 my $file    = $path. time;
@@ -14,8 +14,8 @@ my $data;
 
 SKIP: {
 
-skip 'No API key found', 78
-	unless $app->{'app_key'} and $app->{'app_secret'};
+skip 'DROPBOX_AUTH is not set or has wrong value', 78
+	unless keys %$app;
 
 # Write plain file
 okay { open  $dropbox, '>', $file } 'File opened for writing';

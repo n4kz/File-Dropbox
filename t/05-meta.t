@@ -5,7 +5,7 @@ use Test::More tests => 31;
 use Test::Common qw{ EISDIR :func };
 use File::Dropbox 'metadata';
 
-my $app     = do 'app.conf';
+my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
 my $path    = 'test';
 my $file    = $path. '/'. time;
@@ -20,8 +20,8 @@ like $@, qr{GLOB reference expected},
 
 SKIP: {
 
-skip 'No API key found', 29
-	unless $app->{'app_key'} and $app->{'app_secret'};
+skip 'DROPBOX_AUTH is not set or has wrong value', 29
+	unless keys %$app;
 
 # Create empty file
 okay { open  $dropbox, '>', $file } 'File opened for writing';
