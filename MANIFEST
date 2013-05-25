@@ -1,4 +1,5 @@
 Build.PL
+Changes
 lib/File/Dropbox.pm
 LICENSE
 MANIFEST

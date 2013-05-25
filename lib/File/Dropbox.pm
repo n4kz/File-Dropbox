@@ -1,4 +1,4 @@
-package File::Dropbox 0.1;
+package File::Dropbox 0.2;
 use strict;
 use warnings;
 use feature ':5.10';
