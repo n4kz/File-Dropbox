@@ -6,7 +6,7 @@ use base qw{ Tie::Handle Exporter };
 use Symbol;
 use JSON;
 use WWW::Curl::Easy;
-use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES };
+use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES EAGAIN };
 use Fcntl qw{ SEEK_CUR SEEK_SET SEEK_END };
 our @EXPORT_OK = qw{ contents putfile metadata };
 
@@ -60,6 +60,8 @@ sub READ {
 	my ($self, undef, $length, $offset) = @_;
 	my ($url, $curl);
 
+	undef $!;
+
 	die 'Read is not supported on this handle'
 		if $self->{'mode'} ne '<';
 
@@ -87,8 +89,19 @@ sub READ {
 
 	$code = $curl->getinfo(CURLINFO_HTTP_CODE);
 
-	die join ' ', $code, $response
-		unless $code == 206;
+	given ($code) {
+		1 when 206;
+
+		$! = EACCES, return 0
+			when [401, 403];
+
+		$! = EAGAIN, return 0
+			when 503;
+
+		default {
+			die join ' ', $code, $response
+		}
+	}
 
 	my %headers = map {
 		my ($header, $value) = split m{: *}, $_, 2;
@@ -108,6 +121,8 @@ sub READ {
 sub READLINE {
 	my ($self) = @_;
 	my $length;
+
+	undef $!;
 
 	die 'Readline is not supported on this handle'
 		if $self->{'mode'} ne '<';
@@ -139,7 +154,9 @@ sub READLINE {
 		local $self->{'position'} = $self->{'position'} + $length;
 
 		my $bytes = $self->READ($self->{'buffer'}, $self->{'chunk'}, $length);
-		redo if not $length or $bytes;
+
+		return if $!;
+		redo   if not $length or $bytes;
 	}
 
 	$length = length $self->{'buffer'};
@@ -178,6 +195,8 @@ sub READLINE {
 
 sub SEEK {
 	my ($self, $position, $whence) = @_;
+
+	undef $!;
 
 	die 'Seek is not supported on this handle'
 		if $self->{'mode'} ne '<';
@@ -220,6 +239,8 @@ sub TELL {
 sub WRITE {
 	my ($self, $buffer, $length, $offset) = @_;
 
+	undef $!;
+
 	die 'Write is not supported on this handle'
 		if $self->{'mode'} ne '>';
 
@@ -238,6 +259,7 @@ sub WRITE {
 
 sub CLOSE {
 	my ($self) = @_;
+
 	undef $!;
 
 	return 1
@@ -265,6 +287,7 @@ sub CLOSE {
 
 sub OPEN {
 	my ($self, $mode, $file) = @_;
+
 	undef $!;
 
 	($mode, $file) = $mode =~ m{^([<>]?)(.*)$}s
@@ -385,11 +408,14 @@ sub __flush__ {
 	$code = $curl->getinfo(CURLINFO_HTTP_CODE);
 
 	given ($code) {
-		$! = EACCES, return 0
-			when 403;
-
 		$! = EINVAL, return 0
 			when 400;
+
+		$! = EACCES, return 0
+			when [401, 403];
+
+		$! = EAGAIN, return 0
+			when 503;
 
 		when (200) {
 			$self->{'meta'} = from_json($response)
@@ -437,13 +463,16 @@ sub __meta__ {
 
 	given ($code) {
 		$! = EACCES, return 0
-			when 403;
+			when [401, 403];
 
 		$! = ENOENT, return 0
 			when 404;
 
 		$! = EPERM, return 0
 			when 406;
+
+		$! = EAGAIN, return 0
+			when 503;
 
 		$meta = $self->{'meta'} = from_json($response)
 			when 200;
@@ -528,11 +557,14 @@ sub putfile ($$$) {
 	$code = $curl->getinfo(CURLINFO_HTTP_CODE);
 
 	given ($code) {
-		$! = EACCES, return 0
-			when 403;
-
 		$! = EINVAL, return 0
 			when 400;
+
+		$! = EACCES, return 0
+			when [401, 403];
+
+		$! = EAGAIN, return 0
+			when 503;
 
 		when (200) {
 			$self->{'path'} = $path;
