@@ -12,7 +12,7 @@ my $path    = 'test/';
 my $file    = $path. time;
 my $counter = 0;
 
-package WWW::Curl::Easy;
+package Net::Curl::Easy;
 no warnings 'redefine';
 
 my $perform = UNIVERSAL::can(__PACKAGE__, 'perform');

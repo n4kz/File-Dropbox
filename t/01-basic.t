@@ -68,6 +68,6 @@ subtest Self => sub {
 subtest Curl => sub {
 	my $curl = *$dropbox{'HASH'}->{'curl'};
 
-	isa_ok $curl, 'WWW::Curl::Easy',
+	isa_ok $curl, 'Net::Curl::Easy',
 		'Curl object created';
 };

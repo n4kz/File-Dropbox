@@ -5,7 +5,7 @@ use feature ':5.10';
 use base qw{ Tie::Handle Exporter };
 use Symbol;
 use JSON;
-use WWW::Curl::Easy;
+use Net::Curl::Easy ':constants';
 use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES EAGAIN };
 use Fcntl qw{ SEEK_CUR SEEK_SET SEEK_END };
 
@@ -42,7 +42,7 @@ sub TIEHANDLE {
 		unless $self->{'root'} =~ m{^(?:drop|sand)box$};
 
 	unless ($self->{'curl'}) {
-		my $curl = $self->{'curl'} = WWW::Curl::Easy->new();
+		my $curl = $self->{'curl'} = Net::Curl::Easy->new();
 
 		$curl->setopt(CURLOPT_PROTOCOLS,       CURLPROTO_HTTPS);
 		$curl->setopt(CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
@@ -83,12 +83,9 @@ sub READ {
 	$curl->setopt(CURLOPT_WRITEHEADER, \(my $headers));
 	$curl->setopt(CURLOPT_RANGE, join '-', $self->{'position'}, $self->{'position'} + ($length || 1));
 
-	my $code = $curl->perform();
+	$curl->perform();
 
-	die join ' ', $curl->strerror($code), $curl->errbuf()
-		unless $code == 0;
-
-	$code = $curl->getinfo(CURLINFO_HTTP_CODE);
+	my $code = $curl->getinfo(CURLINFO_HTTP_CODE);
 
 	given ($code) {
 		1 when 206;
@@ -401,12 +398,9 @@ sub __flush__ {
 
 	$curl->setopt(CURLOPT_HTTPHEADER, $headers);
 
-	my $code = $curl->perform();
+	$curl->perform();
 
-	die join ' ', $curl->strerror($code), $curl->errbuf()
-		unless $code == 0;
-
-	$code = $curl->getinfo(CURLINFO_HTTP_CODE);
+	my $code = $curl->getinfo(CURLINFO_HTTP_CODE);
 
 	given ($code) {
 		$! = EINVAL, return 0
@@ -455,12 +449,9 @@ sub __meta__ {
 	$curl->setopt(CURLOPT_HTTPHEADER, [&__header__]);
 	$curl->setopt(CURLOPT_WRITEDATA, \(my $response));
 
-	my $code = $curl->perform();
+	$curl->perform();
 
-	die join ' ', $curl->strerror($code), $curl->errbuf()
-		unless $code == 0;
-
-	$code = $curl->getinfo(CURLINFO_HTTP_CODE);
+	my $code = $curl->getinfo(CURLINFO_HTTP_CODE);
 
 	given ($code) {
 		$! = EACCES, return 0
@@ -550,12 +541,9 @@ sub putfile ($$$) {
 	$curl->setopt(CURLOPT_HTTPHEADER, $headers);
 	$curl->setopt(CURLOPT_READDATA, $upload);
 
-	my $code = $curl->perform();
+	$curl->perform();
 
-	die join ' ', $curl->strerror($code), $curl->errbuf()
-		unless $code == 0;
-
-	$code = $curl->getinfo(CURLINFO_HTTP_CODE);
+	my $code = $curl->getinfo(CURLINFO_HTTP_CODE);
 
 	given ($code) {
 		$! = EINVAL, return 0
@@ -654,8 +642,8 @@ L<close|perlfunc/close>, L<seek|perlfunc/seek>, L<tell|perlfunc/tell>, L<readlin
 L<sysread|perlfunc/sysread>, L<getc|perlfunc/getc>, L<eof|perlfunc/eof>. For write-only state: L<open|perlfunc/open>, L<close|perlfunc/close>,
 L<syswrite|perlfunc/syswrite>, L<print|perlfunc/print>, L<printf|perlfunc/printf>, L<say|perlfunc/say>.
 
-All API requests are done using L<WWW::Curl> module and libcurl will reuse same connection as long as possible.
-This greatly improves overall module performance. To go even further you can share L<WWW::Curl::Easy> object between different C<File::Dropbox>
+All API requests are done using L<Net::Curl> module and libcurl will reuse same connection as long as possible.
+This greatly improves overall module performance. To go even further you can share L<Net::Curl::Easy> object between different C<File::Dropbox>
 objects, see L</new> for details.
 
 =head1 METHODS
@@ -698,7 +686,7 @@ Upload chunk size in bytes. Also buffer size for C<readline>. Optional. Defaults
 
 =item curl
 
-C<WWW::Curl::Easy> object to use. Optional.
+C<Net::Curl::Easy> object to use. Optional.
 
     # Get curl object
     my $curl = *$dropbox->{'curl'};
@@ -771,7 +759,7 @@ unfinished chunked upload on handle, it will be commited.
 
 =head1 SEE ALSO
 
-L<WWW::Curl>, L<WebService::Dropbox>, L<Dropbox API|https://www.dropbox.com/developers/core/docs>
+L<Net::Curl>, L<WebService::Dropbox>, L<Dropbox API|https://www.dropbox.com/developers/core/docs>
 
 =head1 AUTHOR
 
