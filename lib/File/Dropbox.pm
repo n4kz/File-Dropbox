@@ -1,4 +1,4 @@
-package File::Dropbox;
+package File::Dropbox 0.2;
 use strict;
 use warnings;
 use feature ':5.10';
@@ -9,7 +9,6 @@ use WWW::Curl::Easy;
 use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES EAGAIN };
 use Fcntl qw{ SEEK_CUR SEEK_SET SEEK_END };
 
-our $VERSION   = 0.2;
 our @EXPORT_OK = qw{ contents putfile metadata };
 
 my $hosts = {
