@@ -44,7 +44,9 @@ SYNOPSIS
 DESCRIPTION
     `File::Dropbox' provides high-level Dropbox API abstraction based on
     Tie::Handle. Code required to get `access_token' and `access_secret' for
-    signed OAuth requests is not included in this module.
+    signed OAuth 1.0 requests is not included in this module. To get
+    `app_key' and `app_secret' you need to register your application with
+    Dropbox.
 
     At this moment Dropbox API is not fully supported, `File::Dropbox'
     covers file read/write and directory listing methods. If you need full
@@ -59,10 +61,9 @@ DESCRIPTION
     read, sysread, getc, eof. For write-only state: open, close, syswrite,
     print, printf, say.
 
-    All API requests are done using Net::Curl module and libcurl will reuse
-    same connection as long as possible. This greatly improves overall
-    module performance. To go even further you can share Net::Curl::Easy
-    object between different `File::Dropbox' objects, see new for details.
+    All API requests are done using Furl module. For more accurate timeouts
+    Net::DNS::Lite is used, as described in Furl::HTTP. Furl settings can be
+    overriden using `furlopts'.
 
 METHODS
   new
@@ -72,43 +73,42 @@ METHODS
             app_secret    => 'app secret',
             app_key       => 'app key',
             chunk         => 8 * 1024 * 1024,
-            curl          => $curl,
             root          => 'dropbox',
+            furlopts      => {
+                timeout => 20
+            }
         );
 
     Constructor, takes key-value pairs list
 
     access_secret
-        OAuth access secret
+        OAuth 1.0 access secret
 
     access_token
-        OAuth access token
+        OAuth 1.0 access token
 
     app_secret
-        OAuth app secret
+        OAuth 1.0 app secret
 
     app_key
-        OAuth app key
+        OAuth 1.0 app key
 
     chunk
         Upload chunk size in bytes. Also buffer size for `readline'.
         Optional. Defaults to 4MB.
 
-    curl
-        `Net::Curl::Easy' object to use. Optional.
-
-            # Get curl object
-            my $curl = *$dropbox->{'curl'};
-
-            # And share it
-            my $dropbox2 = File::Dropbox->new(%app, curl => $curl);
-
     root
         Access type, `sandbox' for app-folder only access and `dropbox' for
         full access.
 
-    debug
-        Enable libcurl debug output.
+    furlopts
+        Parameter hash, passed to Furl constructor directly. Default options
+
+            timeout   => 10,
+            inet_aton => \&Net::DNS::Lite::inet_aton,
+            ssl_opts  => {
+                SSL_verify_mode => SSL_VERIFY_PEER(),
+            }
 
 FUNCTIONS
     All functions are not exported by default but can be exported on demand.
@@ -149,7 +149,7 @@ FUNCTIONS
 
     Function is useful for uploading small files (up to 150MB possible) in
     one request (at least two API requests required for chunked upload, used
-    in open-write-close cycle). If there is unfinished chunked upload on
+    in open-write-close sequence). If there is unfinished chunked upload on
     handle, it will be commited.
 
         local $/;
@@ -162,7 +162,7 @@ FUNCTIONS
         close $data;
 
 SEE ALSO
-    Net::Curl, WebService::Dropbox, Dropbox API
+    Furl, Furl::HTTP, WebService::Dropbox, Dropbox API
 
 AUTHOR
     Alexander Nazarov <nfokz@cpan.org>

@@ -1,3 +1,7 @@
+0.4 2013-08-04
+  - Net::Curl replaced with Furl
+  - Perl 5.10 support added
+
 0.3 2013-08-03
   - WWW::Curl replaced with Net::Curl
   - Fixed API error handling logic

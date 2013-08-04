@@ -13,4 +13,5 @@ t/04-read.t
 t/05-meta.t
 t/06-putfile.t
 t/07-contents.t
+t/08-timeout.t
 t/lib/Test/Common.pm
