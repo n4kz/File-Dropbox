@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use lib 't/lib';
-use Test::More tests => 6;
+use Test::More tests => 5;
 
 BEGIN {
 	use_ok 'File::Dropbox';
@@ -63,11 +63,4 @@ subtest Self => sub {
 
 	is_deeply \@File::Dropbox::EXPORT_OK, [qw{ contents putfile metadata }],
 		'@EXPORT_OK is set';
-};
-
-subtest Curl => sub {
-	my $curl = *$dropbox{'HASH'}->{'curl'};
-
-	isa_ok $curl, 'Net::Curl::Easy',
-		'Curl object created';
 };

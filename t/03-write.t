@@ -12,15 +12,14 @@ my $path    = 'test/';
 my $file    = $path. time;
 my $counter = 0;
 
-package Net::Curl::Easy;
+package Furl;
 no warnings 'redefine';
 
-my $perform = UNIVERSAL::can(__PACKAGE__, 'perform');
+my $request = UNIVERSAL::can(__PACKAGE__, 'request');
 
-# Hook perform method to get request count
-*perform = sub ($) {
+*request = sub {
 	++$counter;
-	goto &$perform;
+	goto &$request;
 };
 
 package main;
