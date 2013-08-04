@@ -4,11 +4,11 @@ use warnings;
 use Exporter 'import';
 use Test::More;
 use Fcntl qw{ SEEK_CUR SEEK_SET SEEK_END };
-use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES };
+use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES ECANCELED };
 
 our %EXPORT_TAGS = (
 	seek  => [qw{ SEEK_CUR SEEK_SET SEEK_END }],
-	fcntl => [qw{ ENOENT EISDIR EINVAL EPERM EACCES }],
+	fcntl => [qw{ ENOENT EISDIR EINVAL EPERM EACCES ECANCELED }],
 	func  => [qw{ okay errn conf }],
 );
 

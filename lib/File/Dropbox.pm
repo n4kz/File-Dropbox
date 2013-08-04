@@ -5,7 +5,7 @@ use feature ':5.10';
 use base qw{ Tie::Handle Exporter };
 use Symbol;
 use JSON;
-use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES EAGAIN };
+use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES EAGAIN ECANCELED };
 use Fcntl qw{ SEEK_CUR SEEK_SET SEEK_END };
 use Furl;
 use IO::Socket::SSL;
@@ -94,7 +94,15 @@ sub READ {
 			return 0;
 		}
 
+		when (500) {
+			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
+
+			$! = ECANCELED;
+			return 0;
+		}
+
 		when (503) {
+			$self->{'meta'} = { retry => $response->header('Retry-After') };
 			$! = EAGAIN;
 			return 0;
 		}
@@ -403,7 +411,15 @@ sub __flush__ {
 			return 0;
 		}
 
+		when (500) {
+			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
+
+			$! = ECANCELED;
+			return 0;
+		}
+
 		when (503) {
+			$self->{'meta'} = { retry => $response->header('Retry-After') };
 			$! = EAGAIN;
 			return 0;
 		}
@@ -457,7 +473,15 @@ sub __meta__ {
 			return 0;
 		}
 
+		when (500) {
+			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
+
+			$! = ECANCELED;
+			return 0;
+		}
+
 		when (503) {
+			$self->{'meta'} = { retry => $response->header('Retry-After') };
 			$! = EAGAIN;
 			return 0;
 		}
@@ -534,7 +558,15 @@ sub putfile ($$$) {
 			return 0;
 		}
 
+		when (500) {
+			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
+
+			$! = ECANCELED;
+			return 0;
+		}
+
 		when (503) {
+			$self->{'meta'} = { retry => $response->header('Retry-After') };
 			$! = EAGAIN;
 			return 0;
 		};
@@ -614,7 +646,7 @@ File::Dropbox - Convenient and fast Dropbox API abstraction
 =head1 DESCRIPTION
 
 C<File::Dropbox> provides high-level Dropbox API abstraction based on L<Tie::Handle>. Code required to get C<access_token> and
-C<access_secret> for signed OAuth requests is not included in this module. To get C<app_key> and C<app_secret> you need to register
+C<access_secret> for signed OAuth 1.0 requests is not included in this module. To get C<app_key> and C<app_secret> you need to register
 your application with Dropbox.
 
 At this moment Dropbox API is not fully supported, C<File::Dropbox> covers file read/write and directory listing methods. If you need full
@@ -627,7 +659,7 @@ L<close|perlfunc/close>, L<seek|perlfunc/seek>, L<tell|perlfunc/tell>, L<readlin
 L<sysread|perlfunc/sysread>, L<getc|perlfunc/getc>, L<eof|perlfunc/eof>. For write-only state: L<open|perlfunc/open>, L<close|perlfunc/close>,
 L<syswrite|perlfunc/syswrite>, L<print|perlfunc/print>, L<printf|perlfunc/printf>, L<say|perlfunc/say>.
 
-All API requests are done using L<Furl> module. For high-precision timeouts L<Net::DNS::Lite> is used, as described in L<Furl::HTTP>. Furl settings
+All API requests are done using L<Furl> module. For more accurate timeouts L<Net::DNS::Lite> is used, as described in L<Furl::HTTP>. Furl settings
 can be overriden using C<furlopts>.
 
 =head1 METHODS
@@ -652,19 +684,19 @@ Constructor, takes key-value pairs list
 
 =item access_secret
 
-OAuth access secret
+OAuth 1.0 access secret
 
 =item access_token
 
-OAuth access token
+OAuth 1.0 access token
 
 =item app_secret
 
-OAuth app secret
+OAuth 1.0 app secret
 
 =item app_key
 
-OAuth app key
+OAuth 1.0 app key
 
 =item chunk
 
@@ -727,7 +759,7 @@ call to L</contents> or L</putfile>.
 Arguments: $dropbox, $path, $data
 
 Function is useful for uploading small files (up to 150MB possible) in one request (at least
-two API requests required for chunked upload, used in open-write-close cycle). If there is
+two API requests required for chunked upload, used in open-write-close sequence). If there is
 unfinished chunked upload on handle, it will be commited.
 
     local $/;
