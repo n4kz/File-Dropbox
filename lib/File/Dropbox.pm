@@ -202,14 +202,17 @@ sub SEEK {
 	delete $self->{'eof'};
 
 	given ($whence) {
-		$self->{'position'} = $position
-			when SEEK_SET;
+		when (SEEK_SET) {
+			$self->{'position'} = $position
+		}
 
-		$self->{'position'} += $position
-			when SEEK_CUR;
+		when (SEEK_CUR) {
+			$self->{'position'} += $position
+		}
 
-		$self->{'position'} = $self->{'length'} + $position
-			when SEEK_END;
+		when (SEEK_END) {
+			$self->{'position'} = $self->{'length'} + $position
+		}
 
 		default {
 			$! = EINVAL;
@@ -290,12 +293,15 @@ sub OPEN {
 		unless $file;
 
 	given ($mode ||= '<') {
-		1 when '>';
-		1 when '<';
+		when (['>', '<']) { 1 }
 
-		$mode = '<' when 'r';
-		$mode = '>' when 'a';
-		$mode = '>' when 'w';
+		when ('r') {
+			$mode = '<';
+		}
+
+		when (['a', 'w']) {
+			$mode = '>';
+		}
 
 		default {
 			die 'Unsupported mode';
@@ -387,14 +393,20 @@ sub __flush__ {
 	}
 
 	given ($response->code()) {
-		$! = EINVAL, return 0
-			when 400;
+		when (400) {
+			$! = EINVAL;
+			return 0;
+		}
 
-		$! = EACCES, return 0
-			when [401, 403];
+		when ([401, 403]) {
+			$! = EACCES;
+			return 0;
+		}
 
-		$! = EAGAIN, return 0
-			when 503;
+		when (503) {
+			$! = EAGAIN;
+			return 0;
+		}
 
 		when (200) {
 			$self->{'meta'} = from_json($response->content())
@@ -430,22 +442,31 @@ sub __meta__ {
 	my $response = $furl->get($url, &__headers__);
 
 	given ($response->code()) {
-		$! = EACCES, return 0
-			when [401, 403];
+		when ([401, 403]) {
+			$! = EACCES;
+			return 0;
+		}
 
-		$! = ENOENT, return 0
-			when 404;
+		when (404) {
+			$! = ENOENT;
+			return 0;
+		}
 
-		$! = EPERM, return 0
-			when 406;
+		when (406) {
+			$! = EPERM;
+			return 0;
+		}
 
-		$! = EAGAIN, return 0
-			when 503;
+		when (503) {
+			$! = EAGAIN;
+			return 0;
+		}
 
-		$meta = $self->{'meta'} = from_json($response->content())
-			when 200;
+		when (200) {
+			$meta = $self->{'meta'} = from_json($response->content());
+		}
 
-		1 when 304;
+		when (304) { 1 }
 
 		default {
 			die join ' ', $_, $response->decoded_content();
@@ -503,14 +524,20 @@ sub putfile ($$$) {
 	my $response = $furl->put($url, $self->__headers__(), $data);
 
 	given ($response->code()) {
-		$! = EINVAL, return 0
-			when 400;
+		when (400) {
+			$! = EINVAL;
+			return 0;
+		}
 
-		$! = EACCES, return 0
-			when [401, 403];
+		when ([401, 403]) {
+			$! = EACCES;
+			return 0;
+		}
 
-		$! = EAGAIN, return 0
-			when 503;
+		when (503) {
+			$! = EAGAIN;
+			return 0;
+		};
 
 		when (200) {
 			$self->{'path'} = $path;

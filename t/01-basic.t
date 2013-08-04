@@ -20,7 +20,7 @@ subtest Constructor => sub {
 	is ref $dropbox, 'GLOB',
 		'Constructor returned GLOB reference';
 
-	isa_ok *$dropbox{'IO'}, 'IO::File',
+	isa_ok *$dropbox{'IO'}, 'IO::Handle',
 		'GLOB contains IO handle';
 
 	isa_ok *$dropbox{'HASH'}, 'File::Dropbox',
