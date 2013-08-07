@@ -5,7 +5,7 @@ use feature ':5.10';
 use base qw{ Tie::Handle Exporter };
 use Symbol;
 use JSON;
-use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES EAGAIN ECANCELED };
+use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES EAGAIN ECANCELED EFBIG };
 use Fcntl qw{ SEEK_CUR SEEK_SET SEEK_END };
 use Furl;
 use IO::Socket::SSL;
@@ -424,6 +424,11 @@ sub __flush__ {
 			return 0;
 		}
 
+		when (507) {
+			$! = EFBIG;
+			return 0;
+		}
+
 		when (200) {
 			$self->{'meta'} = from_json($response->content())
 				if $self->{'closed'};
@@ -570,6 +575,11 @@ sub putfile ($$$) {
 			$! = EAGAIN;
 			return 0;
 		};
+
+		when (507) {
+			$! = EFBIG;
+			return 0;
+		}
 
 		when (200) {
 			$self->{'path'} = $path;
