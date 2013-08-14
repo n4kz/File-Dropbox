@@ -1,3 +1,7 @@
+0.5 2013-08-14
+  - Quota error handling fixed
+  - OAuth 2.0 support added
+
 0.4 2013-08-04
   - Net::Curl replaced with Furl
   - Perl 5.10 support added

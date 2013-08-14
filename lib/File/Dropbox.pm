@@ -11,7 +11,7 @@ use Furl;
 use IO::Socket::SSL;
 use Net::DNS::Lite;
 
-our $VERSION = 0.4;
+our $VERSION = 0.5;
 our @EXPORT_OK = qw{ contents putfile metadata };
 
 my $hosts = {

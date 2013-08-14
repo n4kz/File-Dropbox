@@ -44,9 +44,9 @@ SYNOPSIS
 DESCRIPTION
     `File::Dropbox' provides high-level Dropbox API abstraction based on
     Tie::Handle. Code required to get `access_token' and `access_secret' for
-    signed OAuth 1.0 requests is not included in this module. To get
-    `app_key' and `app_secret' you need to register your application with
-    Dropbox.
+    signed OAuth 1.0 requests or `access_token' for OAuth 2.0 requests is
+    not included in this module. To get `app_key' and `app_secret' you need
+    to register your application with Dropbox.
 
     At this moment Dropbox API is not fully supported, `File::Dropbox'
     covers file read/write and directory listing methods. If you need full
@@ -79,19 +79,27 @@ METHODS
             }
         );
 
+        my $dropbox = File::Dropbox->new(
+            access_token => 'token',
+            oauth2       => 1
+        );
+
     Constructor, takes key-value pairs list
 
     access_secret
         OAuth 1.0 access secret
 
     access_token
-        OAuth 1.0 access token
+        OAuth 1.0 access token or OAuth 2.0 access token
 
     app_secret
         OAuth 1.0 app secret
 
     app_key
         OAuth 1.0 app key
+
+    oauth2
+        OAuth 2.0 switch, defaults to false.
 
     chunk
         Upload chunk size in bytes. Also buffer size for `readline'.
