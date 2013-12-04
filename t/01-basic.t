@@ -59,8 +59,8 @@ subtest Self => sub {
 	is $self->{'buffer'}, '',
 		'Buffer is empty';
 
-	can_ok $self, qw{ READ WRITE READLINE SEEK TELL OPEN CLOSE EOF BINMODE contents putfile metadata };
+	can_ok $self, qw{ READ WRITE READLINE SEEK TELL OPEN CLOSE EOF BINMODE contents putfile metadata movefile deletefile createfolder copyfile };
 
-	is_deeply \@File::Dropbox::EXPORT_OK, [qw{ contents putfile metadata }],
+	is_deeply \@File::Dropbox::EXPORT_OK, [qw{ contents metadata putfile movefile copyfile createfolder deletefile }],
 		'@EXPORT_OK is set';
 };

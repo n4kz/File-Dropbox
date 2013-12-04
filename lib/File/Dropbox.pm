@@ -12,7 +12,7 @@ use IO::Socket::SSL;
 use Net::DNS::Lite;
 
 our $VERSION = 0.5;
-our @EXPORT_OK = qw{ contents putfile metadata };
+our @EXPORT_OK = qw{ contents metadata putfile movefile copyfile createfolder deletefile };
 
 my $hosts = {
 	content => 'api-content.dropbox.com',
@@ -517,6 +517,77 @@ sub __meta__ {
 	return 1;
 } # __meta__
 
+sub __fileops__ {
+	my ($type, $handle, $source, $target) = @_;
+
+	my $self = *$handle{'HASH'};
+	my $furl = $self->{'furl'};
+	my ($url, @arguments);
+
+	$url  = 'https://';
+	$url .= join '/', $hosts->{'content'}, $version;
+	$url .= join '/', '/fileops', $type;
+
+	given ($type) {
+		when (['move', 'delete']) {
+			@arguments = (
+				from_path => $source,
+				to_path   => $target,
+			);
+		}
+
+		default {
+			@arguments = (
+				path => $source,
+			);
+		}
+	}
+
+	push @arguments, root => $self->{'root'};
+
+	my $response = $furl->post($url, $self->__headers__(), \@arguments);
+
+	given ($response->code()) {
+		when (200) {
+			$self->{'meta'} = from_json($response->content());
+		}
+
+		when ([401, 403]) {
+			$! = EACCES;
+			return 0;
+		}
+
+		when (404) {
+			$! = ENOENT;
+			return 0;
+		}
+
+		when (406) {
+			$! = EPERM;
+			return 0;
+		}
+
+		when (500) {
+			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
+
+			$! = ECANCELED;
+			return 0;
+		}
+
+		when (503) {
+			$self->{'meta'} = { retry => $response->header('Retry-After') };
+			$! = EAGAIN;
+			return 0;
+		}
+
+		default {
+			die join ' ', $_, $response->decoded_content();
+		}
+	}
+
+	return 1;
+} # __fileops__
+
 sub contents ($;$$) {
 	my ($handle, $path, $hash) = @_;
 
@@ -599,6 +670,11 @@ sub putfile ($$$) {
 
 	return 1;
 } # putfile
+
+sub movefile    ($$$) { __fileops__('move', @_) }
+sub copyfile    ($$$) { __fileops__('copy', @_) }
+sub deletefile   ($$) { __fileops__('delete', @_) }
+sub createfolder ($$) { __fileops__('create_folder', @_) }
 
 sub metadata ($) {
 	my ($handle) = @_;
