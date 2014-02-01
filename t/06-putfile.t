@@ -1,24 +1,25 @@
 use strict;
 use warnings;
 use lib 't/lib';
-use Test::More tests => 9;
-use Test::Common qw{ :func EINVAL };
+use Test::More;
+use Test::Common qw{ :func };
 use File::Dropbox qw{ putfile metadata };
 
 my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
-my $path    = 'test';
-my $file    = $path. '/'. time;
+my $file    = join '/', base(), time;
+
+unless (keys %$app) {
+	plan skip_all => 'DROPBOX_AUTH is not set or has wrong value';
+	exit;
+}
+
+plan tests => 7;
 
 eval { putfile $app, $file, 'ABCD' };
 
 like $@, qr{GLOB reference expected},
 	'Function called on wrong reference';
-
-SKIP: {
-
-skip 'DROPBOX_AUTH is not set or has wrong value', 8
-	unless keys %$app;
 
 # Normal upload
 okay { putfile $dropbox, $file, 'A' x 1024 } 'Put 1k file';
@@ -40,7 +41,3 @@ my $data = readline $dropbox;
 # Check content
 is $data, join('', 'A' x 1024),
 	'Content is okay';
-
-# Wrong file name
-errn { putfile $dropbox, $path, 'A' x 1024 } EINVAL, 'Invalid parameters';
-} # SKIP

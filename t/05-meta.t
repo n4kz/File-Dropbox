@@ -1,14 +1,21 @@
 use strict;
 use warnings;
 use lib 't/lib';
-use Test::More tests => 31;
+use Test::More;
 use Test::Common qw{ EISDIR :func };
 use File::Dropbox 'metadata';
 
 my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
-my $path    = 'test';
+my $path    = base();
 my $file    = $path. '/'. time;
+
+unless (keys %$app) {
+	plan skip_all => 'DROPBOX_AUTH is not set or has wrong value';
+	exit;
+}
+
+plan tests => 31;
 
 # Closed handle
 is metadata $dropbox, undef, 'No metadata for closed handle';
@@ -17,11 +24,6 @@ eval { metadata $app };
 
 like $@, qr{GLOB reference expected},
 	'Function called on wrong reference';
-
-SKIP: {
-
-skip 'DROPBOX_AUTH is not set or has wrong value', 29
-	unless keys %$app;
 
 # Create empty file
 okay { open  $dropbox, '>', $file } 'File opened for writing';
@@ -76,5 +78,3 @@ ok exists $meta->{'hash'},     'Cache hash is present';
 ok exists $meta->{'root'},     'File root is present';
 ok exists $meta->{'revision'}, 'Rev hash is present';
 ok exists $meta->{'modified'}, 'File mtime is present';
-
-} # SKIP

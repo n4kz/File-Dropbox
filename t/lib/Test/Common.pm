@@ -9,7 +9,7 @@ use Errno qw{ ENOENT EISDIR EINVAL EPERM EACCES ECANCELED };
 our %EXPORT_TAGS = (
 	seek  => [qw{ SEEK_CUR SEEK_SET SEEK_END }],
 	fcntl => [qw{ ENOENT EISDIR EINVAL EPERM EACCES ECANCELED }],
-	func  => [qw{ okay errn conf }],
+	func  => [qw{ okay errn conf base }],
 );
 
 our @EXPORT_OK = map { @$_ } values %EXPORT_TAGS;
@@ -45,5 +45,7 @@ sub conf {
 
 	return \%app;
 } # conf
+
+sub base { 'test' }
 
 1;

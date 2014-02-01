@@ -16,4 +16,5 @@ t/07-contents.t
 t/08-timeout.t
 t/09-movefile.t
 t/10-copyfile.t
+t/99-clean.t
 t/lib/Test/Common.pm

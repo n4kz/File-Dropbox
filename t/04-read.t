@@ -2,20 +2,22 @@ use strict;
 use warnings;
 use feature 'say';
 use lib 't/lib';
-use Test::More tests => 78;
+use Test::More;
 use Test::Common qw{ EINVAL :func :seek };
 use File::Dropbox;
 
 my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app, chunk => 4096);
-my $path    = 'test/';
-my $file    = $path. time;
+my $path    = base();
+my $file    = $path. '/'. time;
 my $data;
 
-SKIP: {
+unless (keys %$app) {
+	plan skip_all => 'DROPBOX_AUTH is not set or has wrong value';
+	exit;
+}
 
-skip 'DROPBOX_AUTH is not set or has wrong value', 78
-	unless keys %$app;
+plan tests => 78;
 
 # Write plain file
 okay { open  $dropbox, '>', $file } 'File opened for writing';
@@ -102,4 +104,3 @@ is tell $dropbox, 0, 'Right position is set';
 ok !eof $dropbox,    'Not at end of file';
 
 okay { close $dropbox } 'All done';
-} # SKIP

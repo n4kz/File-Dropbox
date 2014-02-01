@@ -2,21 +2,30 @@ use strict;
 use warnings;
 use feature 'say';
 use lib 't/lib';
-use Test::More tests => 64;
+use Test::More;
 use Test::Common qw{ EINVAL :func };
-use File::Dropbox;
+use File::Dropbox qw{ metadata deletefile };
 
 my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app, chunk => 16 * 1024);
-my $path    = 'test/';
-my $file    = $path. time;
+my $path    = base();
+my $file    = $path. '/'. time;
 my $counter = 0;
+my $conflict;
+
+unless (keys %$app) {
+	plan skip_all => 'DROPBOX_AUTH is not set or has wrong value';
+	exit;
+}
+
+plan tests => 67;
 
 package Furl;
 no warnings 'redefine';
 
 my $request = UNIVERSAL::can(__PACKAGE__, 'request');
 
+# Request counter
 *request = sub {
 	++$counter;
 	goto &$request;
@@ -26,15 +35,16 @@ package main;
 
 sub cntr ($) { is $counter, $_[0], sprintf 'Completed %i requests', $_[0] }
 
-SKIP: {
-
-skip 'DROPBOX_AUTH is not set or has wrong value', 64
-	unless keys %$app;
-
 # Try to open directory for writing
 okay { open  $dropbox, '>', $path }                  'Path opened';
 okay { say   $dropbox 'Test directory for writing' } 'Test string written';
-errn { close $dropbox } EINVAL,                      'Commit Failed';
+
+# XXX: new behaviour of Dropbox API, file created with (conflicted copy) in name
+okay { close $dropbox } 'Commited';
+
+my $conflicted = (metadata $dropbox)->{'path'};
+
+like $conflicted, qr{$path}, 'Path for conflicted copy matches';
 
 cntr 2;
 
@@ -108,4 +118,4 @@ okay { close $dropbox }      'All done';
 
 cntr 19;
 
-} # SKIP
+okay { deletefile $dropbox, $conflicted } 'Remove conflicted copy';

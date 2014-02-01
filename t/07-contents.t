@@ -1,24 +1,26 @@
 use strict;
 use warnings;
 use lib 't/lib';
-use Test::More tests => 14;
+use Test::More;
 use Test::Common qw{ :func ENOENT };
 use File::Dropbox qw{ putfile metadata contents };
 
 my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
-my $path    = 'test/contents'. time;
+my $path    = base(). '/contents/';
 my $file    = $path. '/'. time;
+
+unless (keys %$app) {
+	plan skip_all => 'DROPBOX_AUTH is not set or has wrong value';
+	exit;
+}
+
+plan tests => 14;
 
 eval { contents $app };
 
 like $@, qr{GLOB reference expected},
 	'Function called on wrong reference';
-
-SKIP: {
-
-skip 'DROPBOX_AUTH is not set or has wrong value', 13
-	unless keys %$app;
 
 # Create test file and directory
 okay { putfile $dropbox, $file, 'A' x 1024 } 'Put 1k file';
@@ -59,4 +61,3 @@ ok scalar @contents,  'Not empty list returned';
 is ref $meta, 'HASH', 'Metadata is set';
 
 errn { contents $dropbox, $path. '/not_exists' } ENOENT, 'Open invalid directory';
-} # SKIP

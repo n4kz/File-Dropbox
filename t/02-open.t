@@ -7,8 +7,8 @@ use Test::Common ':all';
 
 my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
-my $path    = 'test/';
-my $file    = $path. time;
+my $path    = base();
+my $file    = $path. '/'. time;
 
 sub is_closed {
 	subtest Closed => sub {

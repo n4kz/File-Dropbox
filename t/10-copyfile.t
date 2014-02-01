@@ -2,15 +2,15 @@ use strict;
 use warnings;
 use lib 't/lib';
 use Test::More;
-use Test::Common qw{ :func ENOENT };
-use File::Dropbox qw{ putfile copyfile };
+use Test::Common qw{ :func ENOENT EACCES };
+use File::Dropbox qw{ putfile copyfile movefile };
 
 my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
-my $path    = 'test';
-my $filea   = $path. '/a'. time;
-my $fileb   = $path. '/b'. time;
-my $filec   = $path. '/c'. time;
+my $path    = base();
+my $filea   = $path. '/i/'. time;
+my $fileb   = $path. '/j/'. time;
+my $filec   = $path. '/k/'. time;
 
 unless (keys %$app) {
 	plan skip_all => 'DROPBOX_AUTH is not set or has wrong value';
@@ -48,5 +48,7 @@ errn {
 # Copy file to itself
 okay { movefile $dropbox, $fileb, $fileb } 'File copied to same name';
 
-# Overwrite file
-okay { movefile $dropbox, $fileb, $filea } 'File overwritten';
+# Try overwrite file
+errn {
+	movefile $dropbox, $fileb, $filea;
+} EACCES, 'Failed to overwrite one file with another';
