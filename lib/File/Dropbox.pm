@@ -499,6 +499,12 @@ sub __meta__ {
 
 		when (200) {
 			$meta = $self->{'meta'} = from_json($response->content());
+
+			# XXX: Dropbox returns metadata for recently deleted files
+			if ($meta->{'is_deleted'}) {
+				$! = ENOENT;
+				return 0;
+			}
 		}
 
 		when (304) { 1 }
@@ -525,7 +531,7 @@ sub __fileops__ {
 	my ($url, @arguments);
 
 	$url  = 'https://';
-	$url .= join '/', $hosts->{'content'}, $version;
+	$url .= join '/', $hosts->{'api'}, $version;
 	$url .= join '/', '/fileops', $type;
 
 	given ($type) {
