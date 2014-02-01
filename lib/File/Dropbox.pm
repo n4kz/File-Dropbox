@@ -529,7 +529,7 @@ sub __fileops__ {
 	$url .= join '/', '/fileops', $type;
 
 	given ($type) {
-		when (['move', 'delete']) {
+		when (['move', 'copy']) {
 			@arguments = (
 				from_path => $source,
 				to_path   => $target,

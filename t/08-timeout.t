@@ -5,16 +5,20 @@ use Test::More;
 use Test::Common qw{ :func ECANCELED };
 use File::Dropbox;
 
-plan(skip_all => 'DROPBOX_TIMEOUT is not set'), exit
-	unless $ENV{'DROPBOX_TIMEOUT'};
-
 my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app, furlopts => {
 	timeout => 1,
 });
 
-plan(skip_all => 'DROPBOX_AUTH is not set or has wrong value'), exit
-	unless keys %$app;
+unless (keys %$app) {
+	plan skip_all => 'DROPBOX_AUTH is not set or has wrong value';
+	exit;
+}
+
+unless (exists $ENV{'DROPBOX_TIMEOUT'}) {
+	plan skip_all => 'DROPBOX_TIMEOUT is not set';
+	exit;
+}
 
 plan tests => 10;
 
