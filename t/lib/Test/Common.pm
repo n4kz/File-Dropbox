@@ -34,14 +34,13 @@ sub errn (&$$) {
 sub conf {
 	my %app;
 
-	if (exists $ENV{'DROPBOX_AUTH2'}) {
-		@app{qw{ oauth2 access_token }} = (1, $ENV{'DROPBOX_AUTH2'});
-	} else {
-		@app{qw{ app_key app_secret access_token access_secret }} = split ':', $ENV{'DROPBOX_AUTH'} || '';
+	if (exists $ENV{'DROPBOX_AUTH'}) {
+		if (~index $ENV{'DROPBOX_AUTH'}, ':') {
+			@app{qw{ app_key app_secret access_token access_secret }} = split ':', $ENV{'DROPBOX_AUTH'} || '';
+		} else {
+			@app{qw{ oauth2 access_token }} = (1, $ENV{'DROPBOX_AUTH'});
+		}
 	}
-
-	%app = ()
-		if grep { not defined or not length } values %app;
 
 	return \%app;
 } # conf
