@@ -1,5 +1,3 @@
-
-#!start included /Users/n4kz/perl5/lib/perl5/ExtUtils/MANIFEST.SKIP
 # Avoid version control files.
 \bRCS\b
 \bCVS\b
@@ -25,14 +23,6 @@
 \bpm_to_blib$
 \bblibdirs\.ts$         # 6.18 through 6.25 generated this
 
-# Avoid Module::Build generated and utility files.
-\bBuild$
-\b_build/
-\bBuild.bat$
-\bBuild.COM$
-\bBUILD.COM$
-\bbuild.com$
-
 # Avoid temp and backup files.
 ~$
 \.old$
@@ -52,12 +42,8 @@
 # Avoid Devel::Cover and Devel::CoverX::Covered files.
 \bcover_db\b
 \bcovered\b
- 
-# Avoid MYMETA files
-^MYMETA\.
-#!end included /Users/n4kz/perl5/lib/perl5/ExtUtils/MANIFEST.SKIP
 
-# Avoid configuration metadata file
+# Avoid MYMETA files
 ^MYMETA\.
 
 # Avoid Module::Build generated and utility files.
@@ -72,4 +58,5 @@
 # Avoid archives of this distribution
 \bFile-Dropbox-[\d\.\_]+
 
+# Avoid vim files
 \.sw[po]$
