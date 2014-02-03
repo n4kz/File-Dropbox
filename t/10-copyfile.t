@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use lib 't/lib';
 use Test::More;
-use Test::Common qw{ :func ENOENT EACCES };
+use Test::Common qw{ :func :errno };
 use File::Dropbox qw{ putfile copyfile movefile };
 
 my $app     = conf();

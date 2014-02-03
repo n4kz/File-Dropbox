@@ -3,7 +3,7 @@ use warnings;
 use feature 'say';
 use lib 't/lib';
 use Test::More;
-use Test::Common qw{ EINVAL :func :seek };
+use Test::Common qw{ EINVAL :func :fcntl };
 use File::Dropbox;
 
 my $app     = conf();
