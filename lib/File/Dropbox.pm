@@ -878,6 +878,50 @@ unfinished chunked upload on handle, it will be commited.
 
     close $data;
 
+=head2 copyfile
+
+Arguments: $dropbox, $source, $target
+
+Function copies file or directory from one location to another. Metadata for copy
+can be accessed using L</metadata>.
+
+    copyfile($dropbox, '/data/2012.dat', '/data/2012.dat.bak') or die $!;
+
+    say 'Created backup with revision '. metadata($dropbox)->{'revision'};
+
+=head2 movefile
+
+Arguments: $dropbox, $source, $target
+
+Function moves file or directory from one location to another. Metadata for moved file
+can be accessed using L</metadata>.
+
+    movefile($dropbox, '/data/2012.dat', '/data/2012.dat.bak') or die $!;
+
+    say 'Created backup with size '. metadata($dropbox)->{'size'};
+
+=head2 deletefile
+
+Arguments: $dropbox, $path
+
+Function deletes file or folder at specified path. Metadata for deleted item
+is accessible via L</metadata>.
+
+    deletefile($dropbox, '/data/2012.dat.bak') or die $!;
+
+    say 'Deleted backup with last modification '. metadata($dropbox)->{'modification'};
+
+=head2 createfolder
+
+Arguments: $dropbox, $path
+
+Function creates folder at specified path. Metadata for created folder
+is accessible via L</metadata>.
+
+    createfolder($dropbox, '/data/backups') or die $!;
+
+    say 'Created folder at path '. metadata($dropbox)->{'path'};
+
 =head1 SEE ALSO
 
 L<Furl>, L<Furl::HTTP>, L<WebService::Dropbox>, L<Dropbox API|https://www.dropbox.com/developers/core/docs>
@@ -888,7 +932,7 @@ Alexander Nazarov <nfokz@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2013 Alexander Nazarov
+Copyright 2013, 2014 Alexander Nazarov
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
