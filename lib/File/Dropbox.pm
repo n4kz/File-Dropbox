@@ -11,7 +11,7 @@ use Furl;
 use IO::Socket::SSL;
 use Net::DNS::Lite;
 
-our $VERSION = 0.5;
+our $VERSION = 0.6;
 our @EXPORT_OK = qw{ contents metadata putfile movefile copyfile createfolder deletefile };
 
 my $hosts = {
@@ -883,44 +883,44 @@ unfinished chunked upload on handle, it will be commited.
 Arguments: $dropbox, $source, $target
 
 Function copies file or directory from one location to another. Metadata for copy
-can be accessed using L</metadata>.
+can be accessed using L</metadata> function.
 
     copyfile($dropbox, '/data/2012.dat', '/data/2012.dat.bak') or die $!;
 
-    say 'Created backup with revision '. metadata($dropbox)->{'revision'};
+    say 'Created backup with revision ', metadata($dropbox)->{'revision'};
 
 =head2 movefile
 
 Arguments: $dropbox, $source, $target
 
 Function moves file or directory from one location to another. Metadata for moved file
-can be accessed using L</metadata>.
+can be accessed using L</metadata> function.
 
     movefile($dropbox, '/data/2012.dat', '/data/2012.dat.bak') or die $!;
 
-    say 'Created backup with size '. metadata($dropbox)->{'size'};
+    say 'Created backup with size ', metadata($dropbox)->{'size'};
 
 =head2 deletefile
 
 Arguments: $dropbox, $path
 
 Function deletes file or folder at specified path. Metadata for deleted item
-is accessible via L</metadata>.
+is accessible via L</metadata> function.
 
     deletefile($dropbox, '/data/2012.dat.bak') or die $!;
 
-    say 'Deleted backup with last modification '. metadata($dropbox)->{'modification'};
+    say 'Deleted backup with last modification ', metadata($dropbox)->{'modification'};
 
 =head2 createfolder
 
 Arguments: $dropbox, $path
 
 Function creates folder at specified path. Metadata for created folder
-is accessible via L</metadata>.
+is accessible via L</metadata> function.
 
     createfolder($dropbox, '/data/backups') or die $!;
 
-    say 'Created folder at path '. metadata($dropbox)->{'path'};
+    say 'Created folder at path ', metadata($dropbox)->{'path'};
 
 =head1 SEE ALSO
 

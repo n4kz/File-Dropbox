@@ -169,6 +169,46 @@ FUNCTIONS
 
         close $data;
 
+  copyfile
+    Arguments: $dropbox, $source, $target
+
+    Function copies file or directory from one location to another. Metadata
+    for copy can be accessed using metadata function.
+
+        copyfile($dropbox, '/data/2012.dat', '/data/2012.dat.bak') or die $!;
+
+        say 'Created backup with revision ', metadata($dropbox)->{'revision'};
+
+  movefile
+    Arguments: $dropbox, $source, $target
+
+    Function moves file or directory from one location to another. Metadata
+    for moved file can be accessed using metadata function.
+
+        movefile($dropbox, '/data/2012.dat', '/data/2012.dat.bak') or die $!;
+
+        say 'Created backup with size ', metadata($dropbox)->{'size'};
+
+  deletefile
+    Arguments: $dropbox, $path
+
+    Function deletes file or folder at specified path. Metadata for deleted
+    item is accessible via metadata function.
+
+        deletefile($dropbox, '/data/2012.dat.bak') or die $!;
+
+        say 'Deleted backup with last modification ', metadata($dropbox)->{'modification'};
+
+  createfolder
+    Arguments: $dropbox, $path
+
+    Function creates folder at specified path. Metadata for created folder
+    is accessible via metadata function.
+
+        createfolder($dropbox, '/data/backups') or die $!;
+
+        say 'Created folder at path ', metadata($dropbox)->{'path'};
+
 SEE ALSO
     Furl, Furl::HTTP, WebService::Dropbox, Dropbox API
 
@@ -176,7 +216,7 @@ AUTHOR
     Alexander Nazarov <nfokz@cpan.org>
 
 COPYRIGHT AND LICENSE
-    Copyright 2013 Alexander Nazarov
+    Copyright 2013, 2014 Alexander Nazarov
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
