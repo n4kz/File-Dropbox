@@ -2,21 +2,22 @@ use strict;
 use warnings;
 use lib 't/lib';
 use Test::More;
-use Test::Common qw{ :func ENOENT };
-use File::Dropbox qw{ putfile movefile };
+use Test::Common qw{ :func :errno };
+use File::Dropbox qw{ putfile movefile copyfile };
 
 my $app     = conf();
 my $dropbox = File::Dropbox->new(%$app);
 my $path    = base();
 my $filea   = $path. '/e/'. time;
 my $fileb   = $path. '/f/'. time;
+my $filec   = $path. '/g/'. time;
 
 unless (keys %$app) {
 	plan skip_all => 'DROPBOX_AUTH is not set or has wrong value';
 	exit;
 }
 
-plan tests => 11;
+plan tests => 17;
 
 okay { putfile $dropbox, $filea, 'X' x 1024 } 'Put 1k file';
 
@@ -39,3 +40,13 @@ errn {
 errn {
 	movefile $dropbox, $filea, $fileb;
 } ENOENT, 'Failed to move not existing file';
+
+okay {
+	movefile $dropbox, $fileb, $fileb;
+} 'Moving to same name does nothing';
+
+okay { copyfile $dropbox, $fileb, $filec } 'Copy created';
+
+errn {
+	movefile $dropbox, $filec, $fileb;
+} EACCES, 'Failed override another file';
