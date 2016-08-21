@@ -90,31 +90,8 @@ sub READ {
 		@{ &__headers__ },
 	]);
 
-	given ($response->code()) {
-		when (206) { 1 }
-
-		when ([401, 403]) {
-			$! = EACCES;
-			return 0;
-		}
-
-		when (500) {
-			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
-
-			$! = ECANCELED;
-			return 0;
-		}
-
-		when (503) {
-			$self->{'meta'} = { retry => $response->header('Retry-After') };
-			$! = EAGAIN;
-			return 0;
-		}
-
-		default {
-			die join ' ', $_, $response->decoded_content();
-		}
-	}
+	return $self->__error__($response)
+		if $response->code != 206;
 
 	my $meta  = $response->header('X-Dropbox-Metadata');
 	my $bytes = $response->header('Content-Length');
@@ -213,23 +190,21 @@ sub SEEK {
 
 	delete $self->{'eof'};
 
-	given ($whence) {
-		when (SEEK_SET) {
-			$self->{'position'} = $position
-		}
+	if ($whence == SEEK_SET) {
+		$self->{'position'} = $position
+	}
 
-		when (SEEK_CUR) {
-			$self->{'position'} += $position
-		}
+	elsif ($whence == SEEK_CUR) {
+		$self->{'position'} += $position
+	}
 
-		when (SEEK_END) {
-			$self->{'position'} = $self->{'length'} + $position
-		}
+	elsif ($whence == SEEK_END) {
+		$self->{'position'} = $self->{'length'} + $position
+	}
 
-		default {
-			$! = EINVAL;
-			return 0;
-		}
+	else {
+		$! = EINVAL;
+		return 0;
 	}
 
 	$self->{'position'} = 0
@@ -304,21 +279,13 @@ sub OPEN {
 	($mode, $file) = $mode =~ m{^([<>]?)(.*)$}s
 		unless $file;
 
-	given ($mode ||= '<') {
-		when (['>', '<']) { 1 }
+	$mode ||= '<';
 
-		when ('r') {
-			$mode = '<';
-		}
+	$mode = '<' if $mode eq 'r';
+	$mode = '>' if $mode eq 'a' or $mode eq 'w';
 
-		when (['a', 'w']) {
-			$mode = '>';
-		}
-
-		default {
-			die 'Unsupported mode';
-		}
-	}
+	die 'Unsupported mode'
+		unless $mode eq '<' or $mode eq '>';
 
 	$self->CLOSE()
 		unless $self->{'closed'};
@@ -406,44 +373,11 @@ sub __flush__ {
 		$response = $furl->post($url, &__headers__);
 	}
 
-	given ($response->code()) {
-		when (400) {
-			$! = EINVAL;
-			return 0;
-		}
+	return $self->__error__($response)
+		if $response->code != 200;
 
-		when ([401, 403]) {
-			$! = EACCES;
-			return 0;
-		}
-
-		when (500) {
-			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
-
-			$! = ECANCELED;
-			return 0;
-		}
-
-		when (503) {
-			$self->{'meta'} = { retry => $response->header('Retry-After') };
-			$! = EAGAIN;
-			return 0;
-		}
-
-		when (507) {
-			$! = EFBIG;
-			return 0;
-		}
-
-		when (200) {
-			$self->{'meta'} = from_json($response->content())
-				if $self->{'closed'};
-		}
-
-		default {
-			die join ' ', $_, $response->decoded_content();
-		}
-	}
+	$self->{'meta'} = from_json($response->content())
+		if $self->{'closed'};
 
 	unless ($self->{'upload_id'}) {
 		$response = from_json($response->content());
@@ -468,54 +402,24 @@ sub __meta__ {
 
 	my $response = $furl->get($url, &__headers__);
 
-	given ($response->code()) {
-		when ([401, 403]) {
-			$! = EACCES;
-			return 0;
-		}
+	my $code = $response->code();
 
-		when (404) {
+	if ($code == 200) {
+		$meta = $self->{'meta'} = from_json($response->content());
+
+		# XXX: Dropbox returns metadata for recently deleted files
+		if ($meta->{'is_deleted'}) {
 			$! = ENOENT;
 			return 0;
 		}
-
-		when (406) {
-			$! = EPERM;
-			return 0;
-		}
-
-		when (500) {
-			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
-
-			$! = ECANCELED;
-			return 0;
-		}
-
-		when (503) {
-			$self->{'meta'} = { retry => $response->header('Retry-After') };
-			$! = EAGAIN;
-			return 0;
-		}
-
-		when (200) {
-			$meta = $self->{'meta'} = from_json($response->content());
-
-			# XXX: Dropbox returns metadata for recently deleted files
-			if ($meta->{'is_deleted'}) {
-				$! = ENOENT;
-				return 0;
-			}
-		}
-
-		when (304) { 1 }
-
-		default {
-			die join ' ', $_, $response->decoded_content();
-		}
+	} elsif ($code != 304) {
+		return $self->__error__($response);
 	}
 
-	$! = EISDIR, return 0
-		if $meta->{'is_dir'};
+	if ($meta->{'is_dir'}) {
+		$! = EISDIR;
+		return 0;
+	}
 
 	$self->{'revision'} = $meta->{'rev'};
 	$self->{'length'}   = $meta->{'bytes'};
@@ -534,65 +438,71 @@ sub __fileops__ {
 	$url .= join '/', $hosts->{'api'}, $version;
 	$url .= join '/', '/fileops', $type;
 
-	given ($type) {
-		when (['move', 'copy']) {
-			@arguments = (
-				from_path => $source,
-				to_path   => $target,
-			);
-		}
-
-		default {
-			@arguments = (
-				path => $source,
-			);
-		}
+	if ($type eq 'move' or $type eq 'copy') {
+		@arguments = (
+			from_path => $source,
+			to_path   => $target,
+		);
+	} else {
+		@arguments = (
+			path => $source,
+		);
 	}
 
 	push @arguments, root => $self->{'root'};
 
 	my $response = $furl->post($url, $self->__headers__(), \@arguments);
 
-	given ($response->code()) {
-		when (200) {
-			$self->{'meta'} = from_json($response->content());
-		}
+	return $self->__error__($response)
+		if $response->code != 200;
 
-		when ([401, 403]) {
-			$! = EACCES;
-			return 0;
-		}
-
-		when (404) {
-			$! = ENOENT;
-			return 0;
-		}
-
-		when (406) {
-			$! = EPERM;
-			return 0;
-		}
-
-		when (500) {
-			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
-
-			$! = ECANCELED;
-			return 0;
-		}
-
-		when (503) {
-			$self->{'meta'} = { retry => $response->header('Retry-After') };
-			$! = EAGAIN;
-			return 0;
-		}
-
-		default {
-			die join ' ', $_, $response->decoded_content();
-		}
-	}
+	$self->{'meta'} = from_json($response->content());
 
 	return 1;
 } # __fileops__
+
+sub __error__ {
+	my ($self, $response) = @_;
+	my $code = $response->code();
+
+	if ($code == 400) {
+		$! = EINVAL;
+	}
+
+	elsif ($code == 401 or $code == 403) {
+		$! = EACCES;
+	}
+
+	elsif ($code == 404) {
+		$! = ENOENT;
+		return 0;
+	}
+
+	elsif ($code == 406) {
+		$! = EPERM;
+		return 0;
+	}
+
+	elsif ($code == 500 and $response->content() =~ m{\A(?:Cannot|Failed)}) {
+		$! = ECANCELED;
+	}
+
+	elsif ($code == 503) {
+		$self->{'meta'} = { retry => $response->header('Retry-After') };
+
+		$! = EAGAIN;
+	}
+
+	elsif ($code == 507) {
+		$! = EFBIG;
+	}
+
+	else {
+		die join ' ', $code, $response->decoded_content();
+	}
+
+	return 0;
+} # __error__
 
 sub contents ($;$$) {
 	my ($handle, $path, $hash) = @_;
@@ -635,44 +545,11 @@ sub putfile ($$$) {
 
 	my $response = $furl->put($url, $self->__headers__(), $data);
 
-	given ($response->code()) {
-		when (400) {
-			$! = EINVAL;
-			return 0;
-		}
+	return $self->__error__($response)
+		if $response->code != 200;
 
-		when ([401, 403]) {
-			$! = EACCES;
-			return 0;
-		}
-
-		when (500) {
-			continue unless $response->content() =~ m{\A(?:Cannot|Failed)};
-
-			$! = ECANCELED;
-			return 0;
-		}
-
-		when (503) {
-			$self->{'meta'} = { retry => $response->header('Retry-After') };
-			$! = EAGAIN;
-			return 0;
-		};
-
-		when (507) {
-			$! = EFBIG;
-			return 0;
-		}
-
-		when (200) {
-			$self->{'path'} = $path;
-			$self->{'meta'} = from_json($response->content());
-		}
-
-		default {
-			die join ' ', $_, $response->decoded_content();
-		}
-	}
+	$self->{'path'} = $path;
+	$self->{'meta'} = from_json($response->content());
 
 	return 1;
 } # putfile
