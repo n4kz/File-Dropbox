@@ -584,10 +584,8 @@ File::Dropbox - Convenient and fast Dropbox API abstraction
 
     # Application credentials
     my %app = (
-        app_key       => 'app key',
-        app_secret    => 'app secret',
-        access_token  => 'access token',
-        access_secret => 'access secret',
+        oauth2        => 1,
+        access_token  => $access_token,
     );
 
     my $dropbox = File::Dropbox->new(%app);
@@ -642,10 +640,10 @@ can be overriden using C<furlopts>.
 =head2 new
 
     my $dropbox = File::Dropbox->new(
-        access_secret => 'secret',
-        access_token  => 'token',
-        app_secret    => 'app secret',
-        app_key       => 'app key',
+        access_secret => $access_secret,
+        access_token  => $access_token,
+        app_secret    => $app_secret,
+        app_key       => $app_key,
         chunk         => 8 * 1024 * 1024,
         root          => 'dropbox',
         furlopts      => {
@@ -654,7 +652,7 @@ can be overriden using C<furlopts>.
     );
 
     my $dropbox = File::Dropbox->new(
-        access_token => 'token',
+        access_token => $access_token,
         oauth2       => 1
     );
 
@@ -809,7 +807,7 @@ Alexander Nazarov <nfokz@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2013, 2014 Alexander Nazarov
+Copyright 2013-2016 Alexander Nazarov
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

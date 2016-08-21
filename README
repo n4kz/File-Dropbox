@@ -7,10 +7,8 @@ SYNOPSIS
 
         # Application credentials
         my %app = (
-            app_key       => 'app key',
-            app_secret    => 'app secret',
-            access_token  => 'access token',
-            access_secret => 'access secret',
+            oauth2        => 1,
+            access_token  => $access_token,
         );
 
         my $dropbox = File::Dropbox->new(%app);
@@ -42,15 +40,15 @@ SYNOPSIS
         close $dropbox;
 
 DESCRIPTION
-    `File::Dropbox' provides high-level Dropbox API abstraction based on
-    Tie::Handle. Code required to get `access_token' and `access_secret' for
-    signed OAuth 1.0 requests or `access_token' for OAuth 2.0 requests is
-    not included in this module. To get `app_key' and `app_secret' you need
+    "File::Dropbox" provides high-level Dropbox API abstraction based on
+    Tie::Handle. Code required to get "access_token" and "access_secret" for
+    signed OAuth 1.0 requests or "access_token" for OAuth 2.0 requests is
+    not included in this module. To get "app_key" and "app_secret" you need
     to register your application with Dropbox.
 
-    At this moment Dropbox API is not fully supported, `File::Dropbox'
+    At this moment Dropbox API is not fully supported, "File::Dropbox"
     covers file read/write and directory listing methods. If you need full
-    API support take look at WebService::Dropbox. `File::Dropbox' main
+    API support take look at WebService::Dropbox. "File::Dropbox" main
     purpose is not 100% API coverage, but simple and high-performance file
     operations.
 
@@ -63,15 +61,15 @@ DESCRIPTION
 
     All API requests are done using Furl module. For more accurate timeouts
     Net::DNS::Lite is used, as described in Furl::HTTP. Furl settings can be
-    overriden using `furlopts'.
+    overriden using "furlopts".
 
 METHODS
   new
         my $dropbox = File::Dropbox->new(
-            access_secret => 'secret',
-            access_token  => 'token',
-            app_secret    => 'app secret',
-            app_key       => 'app key',
+            access_secret => $access_secret,
+            access_token  => $access_token,
+            app_secret    => $app_secret,
+            app_key       => $app_key,
             chunk         => 8 * 1024 * 1024,
             root          => 'dropbox',
             furlopts      => {
@@ -80,7 +78,7 @@ METHODS
         );
 
         my $dropbox = File::Dropbox->new(
-            access_token => 'token',
+            access_token => $access_token,
             oauth2       => 1
         );
 
@@ -102,11 +100,11 @@ METHODS
         OAuth 2.0 switch, defaults to false.
 
     chunk
-        Upload chunk size in bytes. Also buffer size for `readline'.
+        Upload chunk size in bytes. Also buffer size for "readline".
         Optional. Defaults to 4MB.
 
     root
-        Access type, `sandbox' for app-folder only access and `dropbox' for
+        Access type, "sandbox" for app-folder only access and "dropbox" for
         full access.
 
     furlopts
@@ -124,14 +122,16 @@ FUNCTIONS
         use File::Dropbox qw{ contents metadata putfile };
 
     First argument for all functions should be GLOB reference, returned by
-    new.
+    "new".
 
   contents
     Arguments: $dropbox [, $path]
 
     Function returns list of hashrefs representing directory content. Hash
-    fields described in Dropbox API docs. `$path' defaults to `/'. If there
-    is unfinished chunked upload on handle, it will be commited.
+    fields described in Dropbox API docs
+    <https://www.dropbox.com/developers/core/docs#metadata>. $path defaults
+    to "/". If there is unfinished chunked upload on handle, it will be
+    commited.
 
         foreach my $file (contents($dropbox, '/data')) {
             next if $file->{'is_dir'};
@@ -142,7 +142,7 @@ FUNCTIONS
     Arguments: $dropbox
 
     Function returns stored metadata for read-only handle, closed write
-    handle or after call to contents or putfile.
+    handle or after call to "contents" or "putfile".
 
         open $dropbox, '<', '/data/2013.dat' or die $!;
 
@@ -173,7 +173,7 @@ FUNCTIONS
     Arguments: $dropbox, $source, $target
 
     Function copies file or directory from one location to another. Metadata
-    for copy can be accessed using metadata function.
+    for copy can be accessed using "metadata" function.
 
         copyfile($dropbox, '/data/2012.dat', '/data/2012.dat.bak') or die $!;
 
@@ -183,7 +183,7 @@ FUNCTIONS
     Arguments: $dropbox, $source, $target
 
     Function moves file or directory from one location to another. Metadata
-    for moved file can be accessed using metadata function.
+    for moved file can be accessed using "metadata" function.
 
         movefile($dropbox, '/data/2012.dat', '/data/2012.dat.bak') or die $!;
 
@@ -193,7 +193,7 @@ FUNCTIONS
     Arguments: $dropbox, $path
 
     Function deletes file or folder at specified path. Metadata for deleted
-    item is accessible via metadata function.
+    item is accessible via "metadata" function.
 
         deletefile($dropbox, '/data/2012.dat.bak') or die $!;
 
@@ -203,7 +203,7 @@ FUNCTIONS
     Arguments: $dropbox, $path
 
     Function creates folder at specified path. Metadata for created folder
-    is accessible via metadata function.
+    is accessible via "metadata" function.
 
         createfolder($dropbox, '/data/backups') or die $!;
 
@@ -211,12 +211,13 @@ FUNCTIONS
 
 SEE ALSO
     Furl, Furl::HTTP, WebService::Dropbox, Dropbox API
+    <https://www.dropbox.com/developers/core/docs>
 
 AUTHOR
     Alexander Nazarov <nfokz@cpan.org>
 
 COPYRIGHT AND LICENSE
-    Copyright 2013, 2014 Alexander Nazarov
+    Copyright 2013-2016 Alexander Nazarov
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
