@@ -11,7 +11,7 @@ use Furl;
 use IO::Socket::SSL;
 use Net::DNS::Lite;
 
-our $VERSION = 0.6;
+our $VERSION = 0.7;
 our @EXPORT_OK = qw{ contents metadata putfile movefile copyfile createfolder deletefile };
 
 my $hosts = {
