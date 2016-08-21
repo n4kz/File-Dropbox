@@ -38,6 +38,9 @@ okay { close $dropbox } 'File committed';
 # Get meta from closed handle
 my $meta = metadata $dropbox;
 
+# XXX: Remove id from meta (not documented field)
+my $id = delete $meta->{'id'};
+
 is ref $meta, 'HASH', 'Got hashref from metadata()';
 
 is $meta->{'bytes'},  0,           'File size is set';
