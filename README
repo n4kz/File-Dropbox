@@ -61,7 +61,7 @@ DESCRIPTION
 
     All API requests are done using Furl module. For more accurate timeouts
     Net::DNS::Lite is used, as described in Furl::HTTP. Furl settings can be
-    overriden using "furlopts".
+    overridden using "furlopts".
 
 METHODS
   new
@@ -131,7 +131,7 @@ FUNCTIONS
     fields described in Dropbox API docs
     <https://www.dropbox.com/developers/core/docs#metadata>. $path defaults
     to "/". If there is unfinished chunked upload on handle, it will be
-    commited.
+    committed.
 
         foreach my $file (contents($dropbox, '/data')) {
             next if $file->{'is_dir'};
@@ -158,7 +158,7 @@ FUNCTIONS
     Function is useful for uploading small files (up to 150MB possible) in
     one request (at least two API requests required for chunked upload, used
     in open-write-close sequence). If there is unfinished chunked upload on
-    handle, it will be commited.
+    handle, it will be committed.
 
         local $/;
         open my $data, '<', '2012.dat' or die $!;
