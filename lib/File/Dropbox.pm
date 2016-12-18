@@ -633,7 +633,7 @@ L<sysread|perlfunc/sysread>, L<getc|perlfunc/getc>, L<eof|perlfunc/eof>. For wri
 L<syswrite|perlfunc/syswrite>, L<print|perlfunc/print>, L<printf|perlfunc/printf>, L<say|perlfunc/say>.
 
 All API requests are done using L<Furl> module. For more accurate timeouts L<Net::DNS::Lite> is used, as described in L<Furl::HTTP>. Furl settings
-can be overriden using C<furlopts>.
+can be overridden using C<furlopts>.
 
 =head1 METHODS
 
@@ -714,7 +714,7 @@ Arguments: $dropbox [, $path]
 
 Function returns list of hashrefs representing directory content. Hash fields described in L<Dropbox API
 docs|https://www.dropbox.com/developers/core/docs#metadata>. C<$path> defaults to C</>. If there is
-unfinished chunked upload on handle, it will be commited.
+unfinished chunked upload on handle, it will be committed.
 
     foreach my $file (contents($dropbox, '/data')) {
         next if $file->{'is_dir'};
@@ -742,7 +742,7 @@ Arguments: $dropbox, $path, $data
 
 Function is useful for uploading small files (up to 150MB possible) in one request (at least
 two API requests required for chunked upload, used in open-write-close sequence). If there is
-unfinished chunked upload on handle, it will be commited.
+unfinished chunked upload on handle, it will be committed.
 
     local $/;
     open my $data, '<', '2012.dat' or die $!;
